@@ -84,6 +84,29 @@ func (s *EventStore) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]
 	return events, nil
 }
 
+// ListAll returns all events across all sessions ordered by server_time.
+func (s *EventStore) ListAll(ctx context.Context) ([]model.Event, error) {
+	rows, err := s.db.Query(ctx,
+		`SELECT id, session_id, event_type, server_time, client_time_ms, client_offset_ms, idempotency_key, payload, created_at
+		 FROM events ORDER BY server_time ASC`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list all events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []model.Event
+	for rows.Next() {
+		var e model.Event
+		if err := rows.Scan(&e.ID, &e.SessionID, &e.EventType, &e.ServerTime,
+			&e.ClientTimeMs, &e.ClientOffsetMs, &e.IdempotencyKey, &e.Payload, &e.CreatedAt); err != nil {
+			return nil, err
+		}
+		events = append(events, e)
+	}
+	return events, nil
+}
+
 func (s *EventStore) GetPhaseTimestamps(ctx context.Context, sessionID uuid.UUID) (map[string]string, error) {
 	rows, err := s.db.Query(ctx,
 		`SELECT event_type, server_time, payload

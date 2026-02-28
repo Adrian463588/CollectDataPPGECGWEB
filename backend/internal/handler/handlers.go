@@ -338,6 +338,14 @@ func (h *ExportHandler) AllSessions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *ExportHandler) AllEvents(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", "attachment; filename=all_events.csv")
+	if err := h.exporter.ExportAllEvents(r.Context(), w); err != nil {
+		slog.Error("export all events failed", "error", err)
+	}
+}
+
 // ---- Admin Handler ----
 
 type AdminHandler struct {

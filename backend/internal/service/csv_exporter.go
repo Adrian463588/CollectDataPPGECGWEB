@@ -169,6 +169,50 @@ func (e *CSVExporter) ExportAllSessions(ctx context.Context, w io.Writer) error 
 	return writer.Error()
 }
 
+// ExportAllEvents writes all events across all sessions as CSV.
+func (e *CSVExporter) ExportAllEvents(ctx context.Context, w io.Writer) error {
+	events, err := e.events.ListAll(ctx)
+	if err != nil {
+		return err
+	}
+
+	writer := csv.NewWriter(w)
+	defer writer.Flush()
+
+	writer.Write([]string{
+		"session_id", "event_id", "event_type", "server_time_wib",
+		"client_time_ms", "client_offset_ms", "idempotency_key", "payload_json",
+	})
+
+	for _, ev := range events {
+		clientMs := ""
+		if ev.ClientTimeMs != nil {
+			clientMs = fmt.Sprintf("%d", *ev.ClientTimeMs)
+		}
+		offsetMs := ""
+		if ev.ClientOffsetMs != nil {
+			offsetMs = fmt.Sprintf("%d", *ev.ClientOffsetMs)
+		}
+		payloadStr := "{}"
+		if ev.Payload != nil {
+			payloadStr = fmt.Sprintf("%v", ev.Payload)
+		}
+
+		writer.Write([]string{
+			ev.SessionID.String(),
+			ev.ID.String(),
+			ev.EventType,
+			wib.Format(ev.ServerTime),
+			clientMs,
+			offsetMs,
+			ev.IdempotencyKey.String(),
+			payloadStr,
+		})
+	}
+
+	return writer.Error()
+}
+
 // ExportParticipantSessions writes all sessions for a participant.
 func (e *CSVExporter) ExportParticipantSessions(ctx context.Context, w io.Writer, participantCode string) error {
 	participant, err := e.participants.GetByCode(ctx, participantCode)
