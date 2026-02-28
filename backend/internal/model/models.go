@@ -38,6 +38,7 @@ const (
 	PhaseDeviceCheck Phase = "DEVICE_CHECK"
 	PhaseCountdown   Phase = "COUNTDOWN"
 	PhaseRelaxation  Phase = "RELAXATION"
+	PhaseRoutine     Phase = "ROUTINE"
 	PhaseStress      Phase = "STRESS"
 	PhaseComplete    Phase = "COMPLETE"
 )
@@ -159,6 +160,20 @@ type SkipResponse struct {
 	TransitionedWIB string `json:"transitioned_at_wib"`
 }
 
+// ---- Researcher Notes ----
+
+type ResearcherNote struct {
+	ID         uuid.UUID `json:"id"`
+	SessionID  uuid.UUID `json:"session_id"`
+	CharLength int       `json:"char_length"`
+	CreatedAt  string    `json:"created_at"`
+}
+
+type SaveNoteRequest struct {
+	Content        string    `json:"content"`
+	ClientTimeMs   int64     `json:"client_time_ms"`
+	IdempotencyKey uuid.UUID `json:"idempotency_key"`
+}
 
 type HeartbeatRequest struct {
 	SequenceNr   int   `json:"sequence_nr"`

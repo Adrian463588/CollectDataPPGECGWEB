@@ -17,6 +17,7 @@ interface HeaderProps {
 const HIDE_NAV_PATTERNS = [
   "/device-check",
   "/relaxation",
+  "/routine",
   "/stress",
 ];
 

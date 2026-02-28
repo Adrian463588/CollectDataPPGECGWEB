@@ -16,6 +16,7 @@ const phaseConfig: Record<Phase, { label: string; emoji: string; color: string }
   DEVICE_CHECK: { label: "Device Check", emoji: "⌚", color: "text-blue-400" },
   COUNTDOWN: { label: "Get Ready", emoji: "⏳", color: "text-amber-400" },
   RELAXATION: { label: "Relaxation", emoji: "🌊", color: "text-teal-400" },
+  ROUTINE: { label: "Researcher Notes", emoji: "📝", color: "text-violet-400" },
   STRESS: { label: "Mental Arithmetic", emoji: "🧮", color: "text-red-400" },
   COMPLETE: { label: "Complete", emoji: "✅", color: "text-emerald-400" },
 };

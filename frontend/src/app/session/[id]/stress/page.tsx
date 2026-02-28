@@ -12,7 +12,6 @@ import NumericKeypad from "@/components/stress/NumericKeypad";
 import ScoreDisplay from "@/components/stress/ScoreDisplay";
 import CountdownTimer from "@/components/ui/CountdownTimer";
 import SkipConfirmModal from "@/components/ui/SkipConfirmModal";
-import Header from "@/components/layout/Header";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { useCountdown } from "@/hooks/useCountdown";
@@ -221,11 +220,11 @@ export default function StressPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header>
+      <div className="px-6 pt-4 flex items-center justify-between">
         <PhaseIndicator phase="STRESS" />
-      </Header>
+      </div>
 
-      <div className="px-6 pt-6">
+      <div className="px-6 pt-2">
         <ProgressBar currentPhase="STRESS" />
       </div>
 
@@ -267,6 +266,13 @@ export default function StressPage() {
           value={inputValue}
           onChange={setInputValue}
           onSubmit={handleSubmit}
+          onValidationError={(reason) => {
+            void logEvent("VALIDATION_ERROR" as Parameters<typeof logEvent>[0], {
+              reason,
+              value_length: inputValue.length,
+              phase: "STRESS",
+            });
+          }}
           disabled={disabled}
         />
 

@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Header from "@/components/layout/Header";
 import { useSession } from "@/hooks/useSession";
 import { resumeAudioContext, resetAudio } from "@/lib/audio";
 
@@ -41,7 +40,7 @@ export default function SessionNewPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+
       <main className="flex-1 flex items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

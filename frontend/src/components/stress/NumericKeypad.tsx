@@ -1,15 +1,21 @@
 // ============================================================
 // NumericKeypad — On-screen number input for math responses
+// Max digits enforced to prevent large number issues.
 // ============================================================
 
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+
+/** Maximum digits allowed in answer input (configurable) */
+const MAX_DIGITS = 6;
 
 interface NumericKeypadProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onValidationError?: (reason: string) => void;
   disabled?: boolean;
 }
 
@@ -17,21 +23,45 @@ export default function NumericKeypad({
   value,
   onChange,
   onSubmit,
+  onValidationError,
   disabled = false,
 }: NumericKeypadProps) {
+  const [error, setError] = useState<string | null>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Auto-clear error message
+  useEffect(() => {
+    return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, []);
+
+  const showError = (msg: string, reason: string) => {
+    setError(msg);
+    onValidationError?.(reason);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(null), 2000);
+  };
+
   const handleDigit = (digit: string) => {
     if (disabled) return;
+    if (value.length >= MAX_DIGITS) {
+      showError(`Maximum ${MAX_DIGITS} digits`, "too_many_digits");
+      return;
+    }
     onChange(value + digit);
   };
 
   const handleBackspace = () => {
     if (disabled) return;
     onChange(value.slice(0, -1));
+    setError(null);
   };
 
   const handleClear = () => {
     if (disabled) return;
     onChange("");
+    setError(null);
   };
 
   const keys = [
@@ -44,10 +74,27 @@ export default function NumericKeypad({
   return (
     <div className="flex flex-col items-center gap-4">
       {/* Input display */}
-      <div className="w-full max-w-xs bg-slate-800/80 rounded-xl px-6 py-4 border border-slate-700/50 text-center">
-        <span className="text-3xl font-mono font-bold text-white tabular-nums">
-          {value || <span className="text-slate-600">—</span>}
-        </span>
+      <div className="w-full max-w-xs">
+        <div className="bg-slate-800/80 rounded-xl px-6 py-4 border border-slate-700/50 text-center">
+          <span className="text-3xl font-mono font-bold text-white tabular-nums">
+            {value || <span className="text-slate-600">—</span>}
+          </span>
+        </div>
+        {/* Inline error */}
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-amber-400 text-center mt-1.5"
+            role="alert"
+          >
+            {error}
+          </motion.p>
+        )}
+        {/* Digit counter */}
+        <p className="text-xs text-slate-600 text-center mt-1">
+          {value.length}/{MAX_DIGITS} digits
+        </p>
       </div>
 
       {/* Keypad grid */}

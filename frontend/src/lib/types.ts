@@ -17,6 +17,7 @@ export type Phase =
   | "DEVICE_CHECK"
   | "COUNTDOWN"
   | "RELAXATION"
+  | "ROUTINE"
   | "STRESS"
   | "COMPLETE";
 
@@ -46,6 +47,10 @@ export type EventType =
   | "SKIP_CLICKED"
   | "SKIP_CANCELLED"
   | "SKIP_CONFIRMED"
+  | "ROUTINE_STARTED"
+  | "ROUTINE_NOTE_SAVED"
+  | "ROUTINE_COMPLETED"
+  | "VALIDATION_ERROR"
   | "SESSION_COMPLETE"
   | "CUSTOM_MARKER";
 

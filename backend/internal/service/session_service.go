@@ -20,7 +20,8 @@ var validTransitions = map[model.Phase][]model.Phase{
 	model.PhaseIntro:       {model.PhaseDeviceCheck},
 	model.PhaseDeviceCheck: {model.PhaseCountdown},
 	model.PhaseCountdown:   {model.PhaseRelaxation},
-	model.PhaseRelaxation:  {model.PhaseStress},
+	model.PhaseRelaxation:  {model.PhaseRoutine},
+	model.PhaseRoutine:     {model.PhaseStress},
 	model.PhaseStress:      {model.PhaseComplete},
 }
 
@@ -150,6 +151,7 @@ func (s *SessionService) ResumeSession(ctx context.Context, sessionID uuid.UUID)
 // Phases that can be skipped via dev controls
 var skippablePhases = map[model.Phase]bool{
 	model.PhaseRelaxation: true,
+	model.PhaseRoutine:    true,
 	model.PhaseStress:     true,
 }
 

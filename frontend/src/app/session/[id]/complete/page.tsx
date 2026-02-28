@@ -9,7 +9,6 @@ import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Header from "@/components/layout/Header";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { getSessionState } from "@/lib/api-client";
@@ -38,11 +37,11 @@ export default function CompletePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header>
+      <div className="px-6 pt-4 flex items-center justify-between">
         <PhaseIndicator phase="COMPLETE" />
-      </Header>
+      </div>
 
-      <div className="px-6 pt-6">
+      <div className="px-6 pt-2">
         <ProgressBar currentPhase="COMPLETE" />
       </div>
 

@@ -10,7 +10,8 @@ const VALID_TRANSITIONS: Record<Phase, Phase[]> = {
   INTRO: ["DEVICE_CHECK"],
   DEVICE_CHECK: ["COUNTDOWN"],
   COUNTDOWN: ["RELAXATION"],
-  RELAXATION: ["STRESS"],
+  RELAXATION: ["ROUTINE"],
+  ROUTINE: ["STRESS"],
   STRESS: ["COMPLETE"],
   COMPLETE: [],
 };
@@ -26,7 +27,7 @@ export const DEFAULT_PHASE_DURATIONS: Partial<Record<Phase, number>> = {
 export const AUTO_ADVANCE_PHASES: Phase[] = ["COUNTDOWN", "RELAXATION", "STRESS"];
 
 /** Phases that can be skipped via dev controls */
-export const SKIPPABLE_PHASES: Phase[] = ["RELAXATION", "STRESS"];
+export const SKIPPABLE_PHASES: Phase[] = ["RELAXATION", "ROUTINE", "STRESS"];
 
 /** If true, skip goes to the next phase's instructions screen instead of the phase itself */
 export const SKIP_TO_INSTRUCTIONS = false;
@@ -50,7 +51,7 @@ export function shouldAutoAdvance(phase: Phase): boolean {
 
 /** Get the ordered list of all phases */
 export function getAllPhases(): Phase[] {
-  return ["INTRO", "DEVICE_CHECK", "COUNTDOWN", "RELAXATION", "STRESS", "COMPLETE"];
+  return ["INTRO", "DEVICE_CHECK", "COUNTDOWN", "RELAXATION", "ROUTINE", "STRESS", "COMPLETE"];
 }
 
 /** Get the index of a phase (for progress indication) */

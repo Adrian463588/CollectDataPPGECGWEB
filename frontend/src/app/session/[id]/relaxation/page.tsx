@@ -11,7 +11,6 @@ import { motion } from "framer-motion";
 import BoxBreathingCircle from "@/components/relaxation/BoxBreathingCircle";
 import CountdownTimer from "@/components/ui/CountdownTimer";
 import SkipConfirmModal from "@/components/ui/SkipConfirmModal";
-import Header from "@/components/layout/Header";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { useCountdown } from "@/hooks/useCountdown";
@@ -42,10 +41,10 @@ export default function RelaxationPage() {
   const handleBreathingComplete = useCallback(() => {
     void logEvent("PHASE_TRANSITION", {
       from_phase: "RELAXATION",
-      to_phase: "STRESS",
+      to_phase: "ROUTINE",
     });
     playTransitionBeep();
-    router.push(`/session/${sessionId}/stress`);
+    router.push(`/session/${sessionId}/routine`);
   }, [logEvent, router, sessionId]);
 
   // Box breathing hook
@@ -111,19 +110,19 @@ export default function RelaxationPage() {
     stopAllAudio();
     void logEvent("PHASE_TRANSITION", {
       from_phase: "RELAXATION",
-      to_phase: "STRESS",
+      to_phase: "ROUTINE",
       end_reason: "manual_skip",
     });
-    router.push(`/session/${sessionId}/stress`);
+    router.push(`/session/${sessionId}/routine`);
   }, [logEvent, globalTimer, router, sessionId]);
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header>
+      <div className="px-6 pt-4 flex items-center justify-between">
         <PhaseIndicator phase={phase === "countdown" ? "COUNTDOWN" : "RELAXATION"} />
-      </Header>
+      </div>
 
-      <div className="px-6 pt-6">
+      <div className="px-6 pt-2">
         <ProgressBar currentPhase={phase === "countdown" ? "COUNTDOWN" : "RELAXATION"} />
       </div>
 

@@ -429,3 +429,45 @@ func (h *AdminHandler) ResumeSession(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "running"})
 }
+
+// ---- Note Handler ----
+
+type NoteHandler struct {
+	notes *store.NoteStore
+}
+
+func NewNoteHandler(notes *store.NoteStore) *NoteHandler {
+	return &NoteHandler{notes: notes}
+}
+
+func (h *NoteHandler) SaveNote(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+
+	var req model.SaveNoteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, r, http.StatusBadRequest, "INVALID_JSON", "Invalid request body")
+		return
+	}
+
+	content := req.Content
+	if len([]rune(content)) == 0 {
+		writeError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "Note content cannot be empty")
+		return
+	}
+	if len([]rune(content)) > 2000 {
+		writeError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "Note content exceeds 2000 characters")
+		return
+	}
+
+	note, err := h.notes.Create(r.Context(), id, content)
+	if err != nil {
+		slog.Error("save note failed", "error", err)
+		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to save note")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, note)
+}
