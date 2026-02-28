@@ -1,0 +1,117 @@
+// ============================================================
+// Complete Page — Session completion summary
+// ============================================================
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { motion } from "framer-motion";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Header from "@/components/layout/Header";
+import ProgressBar from "@/components/ui/ProgressBar";
+import PhaseIndicator from "@/components/layout/PhaseIndicator";
+import { getSessionState } from "@/lib/api-client";
+import type { SessionState } from "@/lib/types";
+
+export default function CompletePage() {
+  const params = useParams();
+  const sessionId = params.id as string;
+  const [sessionState, setSessionState] = useState<SessionState | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const state = await getSessionState(sessionId);
+        setSessionState(state);
+      } catch {
+        // Non-critical — show generic completion
+      }
+    }
+    void load();
+  }, [sessionId]);
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header>
+        <PhaseIndicator phase="COMPLETE" />
+      </Header>
+
+      <div className="px-6 pt-6">
+        <ProgressBar currentPhase="COMPLETE" />
+      </div>
+
+      <main className="flex-1 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-lg"
+        >
+          <Card className="text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="text-6xl mb-4"
+            >
+              🎉
+            </motion.div>
+
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Session Complete!
+            </h2>
+            <p className="text-slate-400 mb-8">
+              Thank you for participating in this study. Your data has been
+              recorded successfully.
+            </p>
+
+            {sessionState && (
+              <div className="bg-slate-800/50 rounded-xl p-6 mb-8 text-left space-y-3">
+                <h3 className="font-semibold text-white text-sm uppercase tracking-wider mb-3">
+                  Session Summary
+                </h3>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Session ID</span>
+                  <span className="text-white font-mono text-xs">
+                    {sessionId.slice(0, 8)}…
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Status</span>
+                  <span className="text-emerald-400 font-medium">
+                    {sessionState.status}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Total Elapsed</span>
+                  <span className="text-white font-mono">
+                    {sessionState.elapsed_ms
+                      ? `${Math.round(sessionState.elapsed_ms / 1000)}s`
+                      : "—"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <p className="text-sm text-slate-500">
+                You may now remove your devices. Please inform the researcher
+                that your session is complete.
+              </p>
+              <Button
+                variant="secondary"
+                onClick={() => window.location.assign("/session/new")}
+                className="w-full"
+                id="new-session-btn"
+              >
+                Start New Session
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+      </main>
+    </div>
+  );
+}
