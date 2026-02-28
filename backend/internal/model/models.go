@@ -146,6 +146,20 @@ type TransitionResponse struct {
 	EndsAtWIB    string `json:"ends_at_wib"`
 }
 
+type SkipRequest struct {
+	CurrentPhase   Phase     `json:"current_phase"`
+	ClientTimeMs   int64     `json:"client_time_ms"`
+	IdempotencyKey uuid.UUID `json:"idempotency_key"`
+}
+
+type SkipResponse struct {
+	FromPhase       Phase  `json:"from_phase"`
+	ToPhase         Phase  `json:"to_phase"`
+	EndReason       string `json:"end_reason"`
+	TransitionedWIB string `json:"transitioned_at_wib"`
+}
+
+
 type HeartbeatRequest struct {
 	SequenceNr   int   `json:"sequence_nr"`
 	ClientTimeMs int64 `json:"client_time_ms"`

@@ -25,6 +25,12 @@ export const DEFAULT_PHASE_DURATIONS: Partial<Record<Phase, number>> = {
 /** Phases that auto-advance after their duration expires */
 export const AUTO_ADVANCE_PHASES: Phase[] = ["COUNTDOWN", "RELAXATION", "STRESS"];
 
+/** Phases that can be skipped via dev controls */
+export const SKIPPABLE_PHASES: Phase[] = ["RELAXATION", "STRESS"];
+
+/** If true, skip goes to the next phase's instructions screen instead of the phase itself */
+export const SKIP_TO_INSTRUCTIONS = false;
+
 /** Check if a transition is valid */
 export function isValidTransition(from: Phase, to: Phase): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;

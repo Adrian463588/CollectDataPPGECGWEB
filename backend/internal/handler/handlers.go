@@ -252,6 +252,42 @@ func (h *SessionHandler) GetStimuli(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, stimuli)
 }
 
+func (h *SessionHandler) SkipPhase(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+
+	var req model.SkipRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, r, http.StatusBadRequest, "INVALID_JSON", "Invalid request body")
+		return
+	}
+	if req.CurrentPhase == "" {
+		writeError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "current_phase is required")
+		return
+	}
+
+	resp, err := h.service.SkipPhase(r.Context(), id, req.CurrentPhase, req.ClientTimeMs, req.IdempotencyKey)
+	if err != nil {
+		errMsg := err.Error()
+		switch {
+		case len(errMsg) > 14 && errMsg[:14] == "PHASE_MISMATCH":
+			writeError(w, r, http.StatusConflict, "PHASE_MISMATCH", errMsg)
+		case len(errMsg) > 17 && errMsg[:17] == "SESSION_COMPLETED":
+			writeError(w, r, http.StatusConflict, "SESSION_COMPLETED", errMsg)
+		case errMsg == "session not found":
+			writeError(w, r, http.StatusNotFound, "NOT_FOUND", "Session not found")
+		default:
+			slog.Error("skip phase failed", "error", err)
+			writeError(w, r, http.StatusBadRequest, "SKIP_ERROR", errMsg)
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 // ---- Event Handler ----
 
 type EventHandler struct {

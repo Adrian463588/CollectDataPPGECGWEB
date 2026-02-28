@@ -147,6 +147,83 @@ func (s *SessionService) ResumeSession(ctx context.Context, sessionID uuid.UUID)
 	return s.sessions.UpdateStatus(ctx, sessionID, model.SessionRunning)
 }
 
+// Phases that can be skipped via dev controls
+var skippablePhases = map[model.Phase]bool{
+	model.PhaseRelaxation: true,
+	model.PhaseStress:     true,
+}
+
+// SkipPhase ends the current phase immediately and transitions to the next phase.
+// Only allowed for skippable phases (RELAXATION, STRESS).
+func (s *SessionService) SkipPhase(ctx context.Context, sessionID uuid.UUID, currentPhase model.Phase, clientTimeMs int64, idempotencyKey uuid.UUID) (*model.SkipResponse, error) {
+	// Validate phase is skippable
+	if !skippablePhases[currentPhase] {
+		return nil, fmt.Errorf("phase %s is not skippable", currentPhase)
+	}
+
+	sess, err := s.sessions.GetByID(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	// Validate session is in the expected phase
+	if sess.CurrentPhase != currentPhase {
+		return nil, fmt.Errorf("PHASE_MISMATCH: session is in %s, not %s", sess.CurrentPhase, currentPhase)
+	}
+
+	// Validate session is not completed
+	if sess.Status == model.SessionCompleted {
+		return nil, fmt.Errorf("SESSION_COMPLETED: session is already completed")
+	}
+
+	// Get next phase
+	nextPhase := getNextPhase(currentPhase)
+	if nextPhase == "" {
+		return nil, fmt.Errorf("no next phase after %s", currentPhase)
+	}
+
+	serverTime := wib.Now()
+
+	// Log PHASE_TRANSITION with end_reason: manual_skip
+	s.events.Create(ctx, sessionID, model.BatchEventItem{
+		EventType:      "PHASE_TRANSITION",
+		ClientTimeMs:   clientTimeMs,
+		IdempotencyKey: idempotencyKey,
+		Payload: map[string]interface{}{
+			"from_phase": string(currentPhase),
+			"to_phase":   string(nextPhase),
+			"end_reason": "manual_skip",
+		},
+	})
+
+	// Update session phase
+	if nextPhase == model.PhaseComplete {
+		if err := s.sessions.Complete(ctx, sessionID); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.sessions.UpdatePhase(ctx, sessionID, nextPhase, model.SessionRunning); err != nil {
+			return nil, err
+		}
+	}
+
+	return &model.SkipResponse{
+		FromPhase:       currentPhase,
+		ToPhase:         nextPhase,
+		EndReason:       "manual_skip",
+		TransitionedWIB: wib.FormatISO(serverTime),
+	}, nil
+}
+
+// getNextPhase returns the single valid next phase, or empty if none.
+func getNextPhase(from model.Phase) model.Phase {
+	targets := validTransitions[from]
+	if len(targets) == 1 {
+		return targets[0]
+	}
+	return ""
+}
+
 func isValidTransition(from, to model.Phase) bool {
 	allowed, ok := validTransitions[from]
 	if !ok {

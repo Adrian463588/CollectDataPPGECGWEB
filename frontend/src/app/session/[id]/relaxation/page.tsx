@@ -10,6 +10,7 @@ import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import BoxBreathingCircle from "@/components/relaxation/BoxBreathingCircle";
 import CountdownTimer from "@/components/ui/CountdownTimer";
+import SkipConfirmModal from "@/components/ui/SkipConfirmModal";
 import Header from "@/components/layout/Header";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
@@ -17,7 +18,8 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { useBoxBreathing } from "@/hooks/useBoxBreathing";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useEventLogger } from "@/hooks/useEventLogger";
-import { playTransitionBeep } from "@/lib/audio";
+import { useDevControls } from "@/hooks/useDevControls";
+import { playTransitionBeep, stopAllAudio } from "@/lib/audio";
 import { DEFAULT_SESSION_CONFIG } from "@/lib/types";
 
 const RELAXATION_DURATION_MS = DEFAULT_SESSION_CONFIG.relaxation_duration_ms;
@@ -30,6 +32,8 @@ export default function RelaxationPage() {
 
   const [phase, setPhase] = useState<"countdown" | "relaxation">("countdown");
   const hasStartedRef = useRef(false);
+  const [skipModalOpen, setSkipModalOpen] = useState(false);
+  const devControls = useDevControls();
 
   const { logEvent } = useEventLogger(sessionId);
   useHeartbeat(sessionId);
@@ -87,6 +91,31 @@ export default function RelaxationPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ---- Skip handlers ----
+  const handleSkipClick = useCallback(() => {
+    void logEvent("SKIP_CLICKED", { phase: "RELAXATION" });
+    setSkipModalOpen(true);
+  }, [logEvent]);
+
+  const handleSkipCancel = useCallback(() => {
+    void logEvent("SKIP_CANCELLED", { phase: "RELAXATION" });
+    setSkipModalOpen(false);
+  }, [logEvent]);
+
+  const handleSkipConfirm = useCallback(() => {
+    setSkipModalOpen(false);
+    void logEvent("SKIP_CONFIRMED", { phase: "RELAXATION" });
+    // Stop all timers, breathing, and audio
+    globalTimer.reset();
+    stopAllAudio();
+    void logEvent("PHASE_TRANSITION", {
+      from_phase: "RELAXATION",
+      to_phase: "STRESS",
+      end_reason: "manual_skip",
+    });
+    router.push(`/session/${sessionId}/stress`);
+  }, [logEvent, globalTimer, router, sessionId]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -169,9 +198,28 @@ export default function RelaxationPage() {
               Follow the breathing pattern. Inhale, hold, exhale, hold.
               The next phase will begin automatically.
             </p>
+
+            {/* Dev Controls: Skip button */}
+            {devControls && (
+              <button
+                onClick={handleSkipClick}
+                className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-300 bg-amber-900/30 border border-amber-700/40 hover:bg-amber-800/40 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                id="skip-phase-btn"
+              >
+                ⏩ Skip Phase (Dev)
+              </button>
+            )}
           </motion.div>
         )}
       </main>
+
+      {/* Skip confirmation modal */}
+      <SkipConfirmModal
+        open={skipModalOpen}
+        onConfirm={handleSkipConfirm}
+        onCancel={handleSkipCancel}
+        phaseName="Relaxation"
+      />
     </div>
   );
 }

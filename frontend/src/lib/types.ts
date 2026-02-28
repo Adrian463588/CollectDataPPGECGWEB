@@ -43,6 +43,9 @@ export type EventType =
   | "HEARTBEAT"
   | "RECONNECT"
   | "AUDIO_TOGGLE"
+  | "SKIP_CLICKED"
+  | "SKIP_CANCELLED"
+  | "SKIP_CONFIRMED"
   | "SESSION_COMPLETE"
   | "CUSTOM_MARKER";
 

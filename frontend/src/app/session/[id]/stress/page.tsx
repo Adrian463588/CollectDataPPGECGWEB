@@ -11,12 +11,14 @@ import MathProblem from "@/components/stress/MathProblem";
 import NumericKeypad from "@/components/stress/NumericKeypad";
 import ScoreDisplay from "@/components/stress/ScoreDisplay";
 import CountdownTimer from "@/components/ui/CountdownTimer";
+import SkipConfirmModal from "@/components/ui/SkipConfirmModal";
 import Header from "@/components/layout/Header";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { useCountdown } from "@/hooks/useCountdown";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useEventLogger } from "@/hooks/useEventLogger";
+import { useDevControls } from "@/hooks/useDevControls";
 import {
   playTransitionBeep,
   playStimulusBeep,
@@ -57,6 +59,8 @@ export default function StressPage() {
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [questionNumber, setQuestionNumber] = useState(1);
   const [disabled, setDisabled] = useState(false);
+  const [skipModalOpen, setSkipModalOpen] = useState(false);
+  const devControls = useDevControls();
 
   const problemStartRef = useRef<number>(Date.now());
   const { logEvent } = useEventLogger(sessionId);
@@ -189,6 +193,32 @@ export default function StressPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ---- Skip handlers ----
+  const handleSkipClick = useCallback(() => {
+    void logEvent("SKIP_CLICKED", { phase: "STRESS" });
+    setSkipModalOpen(true);
+  }, [logEvent]);
+
+  const handleSkipCancel = useCallback(() => {
+    void logEvent("SKIP_CANCELLED", { phase: "STRESS" });
+    setSkipModalOpen(false);
+  }, [logEvent]);
+
+  const handleSkipConfirm = useCallback(() => {
+    setSkipModalOpen(false);
+    void logEvent("SKIP_CONFIRMED", { phase: "STRESS" });
+    // Stop all timers and audio
+    phaseTimer.reset();
+    questionTimer.reset();
+    stopAllAudio();
+    void logEvent("PHASE_TRANSITION", {
+      from_phase: "STRESS",
+      to_phase: "COMPLETE",
+      end_reason: "manual_skip",
+    });
+    router.push(`/session/${sessionId}/complete`);
+  }, [logEvent, phaseTimer, questionTimer, router, sessionId]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header>
@@ -239,7 +269,26 @@ export default function StressPage() {
           onSubmit={handleSubmit}
           disabled={disabled}
         />
+
+        {/* Dev Controls: Skip button */}
+        {devControls && (
+          <button
+            onClick={handleSkipClick}
+            className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-300 bg-amber-900/30 border border-amber-700/40 hover:bg-amber-800/40 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            id="skip-phase-btn"
+          >
+            ⏩ Skip Phase (Dev)
+          </button>
+        )}
       </main>
+
+      {/* Skip confirmation modal */}
+      <SkipConfirmModal
+        open={skipModalOpen}
+        onConfirm={handleSkipConfirm}
+        onCancel={handleSkipCancel}
+        phaseName="Stress"
+      />
     </div>
   );
 }
