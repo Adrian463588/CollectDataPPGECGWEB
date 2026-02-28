@@ -13,6 +13,7 @@ import Header from "@/components/layout/Header";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { getSessionState } from "@/lib/api-client";
+import { stopAllAudio } from "@/lib/audio";
 import type { SessionState } from "@/lib/types";
 
 export default function CompletePage() {
@@ -21,6 +22,9 @@ export default function CompletePage() {
   const [sessionState, setSessionState] = useState<SessionState | null>(null);
 
   useEffect(() => {
+    // Defense-in-depth: kill any lingering audio on completion
+    stopAllAudio();
+
     async function load() {
       try {
         const state = await getSessionState(sessionId);

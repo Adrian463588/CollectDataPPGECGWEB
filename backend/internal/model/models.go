@@ -42,13 +42,21 @@ const (
 	PhaseComplete    Phase = "COMPLETE"
 )
 
+type BreathingConfig struct {
+	InhaleMs         int `json:"inhale_ms"`
+	HoldAfterInhaleMs int `json:"hold_after_inhale_ms"`
+	ExhaleMs         int `json:"exhale_ms"`
+	HoldAfterExhaleMs int `json:"hold_after_exhale_ms"`
+}
+
 type SessionConfig struct {
-	RelaxationDurationMs int    `json:"relaxation_duration_ms"`
-	StressDurationMs     int    `json:"stress_duration_ms"`
-	QuestionTimeoutMs    int    `json:"question_timeout_ms"`
-	Difficulty           string `json:"difficulty"`
-	AudioEnabled         bool   `json:"audio_enabled"`
-	ScoreVisible         bool   `json:"score_visible"`
+	RelaxationDurationMs int             `json:"relaxation_duration_ms"`
+	StressDurationMs     int             `json:"stress_duration_ms"`
+	QuestionTimeoutMs    int             `json:"question_timeout_ms"`
+	Difficulty           string          `json:"difficulty"`
+	AudioEnabled         bool            `json:"audio_enabled"`
+	ScoreVisible         bool            `json:"score_visible"`
+	BreathingConfig      BreathingConfig `json:"breathing_config"`
 }
 
 type Session struct {

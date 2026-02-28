@@ -22,6 +22,7 @@ import {
   playStimulusBeep,
   playCorrectChime,
   playIncorrectBuzz,
+  stopAllAudio,
 } from "@/lib/audio";
 import { DEFAULT_SESSION_CONFIG } from "@/lib/types";
 
@@ -73,6 +74,11 @@ export default function StressPage() {
       to_phase: "COMPLETE",
     });
     playTransitionBeep();
+    // Kill all audio AFTER the final beep is scheduled.
+    // The safe timeout in playTransitionBeep will be cancelled by stopAllAudio
+    // within 150ms, but the first tone already started.
+    // We use a brief delay so the first tone plays, then kill everything.
+    setTimeout(() => stopAllAudio(), 200);
     router.push(`/session/${sessionId}/complete`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, sessionId, logEvent]);

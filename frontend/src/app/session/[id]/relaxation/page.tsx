@@ -1,25 +1,27 @@
 // ============================================================
-// Relaxation Phase — 5-minute relaxation with breathing animation
+// Relaxation Phase — 5-minute box breathing protocol
+// Pattern: Inhale → Hold → Exhale → Hold (configurable durations)
 // ============================================================
 
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import BreathingCircle from "@/components/relaxation/BreathingCircle";
+import BoxBreathingCircle from "@/components/relaxation/BoxBreathingCircle";
 import CountdownTimer from "@/components/ui/CountdownTimer";
 import Header from "@/components/layout/Header";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { useCountdown } from "@/hooks/useCountdown";
+import { useBoxBreathing } from "@/hooks/useBoxBreathing";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useEventLogger } from "@/hooks/useEventLogger";
 import { playTransitionBeep } from "@/lib/audio";
 import { DEFAULT_SESSION_CONFIG } from "@/lib/types";
 
 const RELAXATION_DURATION_MS = DEFAULT_SESSION_CONFIG.relaxation_duration_ms;
-const COUNTDOWN_DURATION_MS = 5_000; // 5-second pre-start countdown
+const COUNTDOWN_DURATION_MS = 5_000;
 
 export default function RelaxationPage() {
   const router = useRouter();
@@ -27,12 +29,13 @@ export default function RelaxationPage() {
   const sessionId = params.id as string;
 
   const [phase, setPhase] = useState<"countdown" | "relaxation">("countdown");
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const hasStartedRef = useRef(false);
 
   const { logEvent } = useEventLogger(sessionId);
   useHeartbeat(sessionId);
 
-  const handleRelaxationComplete = useCallback(() => {
+  // Called when box breathing completes (current step finishes after global timer)
+  const handleBreathingComplete = useCallback(() => {
     void logEvent("PHASE_TRANSITION", {
       from_phase: "RELAXATION",
       to_phase: "STRESS",
@@ -41,33 +44,48 @@ export default function RelaxationPage() {
     router.push(`/session/${sessionId}/stress`);
   }, [logEvent, router, sessionId]);
 
-  const handleCountdownComplete = useCallback(() => {
+  // Box breathing hook
+  const breathing = useBoxBreathing(
+    sessionId,
+    DEFAULT_SESSION_CONFIG.breathing_config,
+    RELAXATION_DURATION_MS,
+    DEFAULT_SESSION_CONFIG.audio_enabled,
+    handleBreathingComplete
+  );
+
+  // Global timer — when it expires, signal box breathing to finish current step
+  const handleGlobalTimerExpired = useCallback(() => {
+    breathing.signalEnd();
+  }, [breathing]);
+
+  const countdownTimer = useCountdown(() => {
     setPhase("relaxation");
     void logEvent("PHASE_TRANSITION", {
       from_phase: "COUNTDOWN",
       to_phase: "RELAXATION",
     });
     playTransitionBeep();
-    relaxationTimer.start(RELAXATION_DURATION_MS);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logEvent]);
+  });
 
-  const countdownTimer = useCountdown(handleCountdownComplete);
-  const relaxationTimer = useCountdown(handleRelaxationComplete);
+  const globalTimer = useCountdown(handleGlobalTimerExpired);
 
+  // Start box breathing when relaxation phase begins
   useEffect(() => {
-    // Check reduced motion preference
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mq.matches);
+    if (phase === "relaxation" && !hasStartedRef.current) {
+      hasStartedRef.current = true;
+      breathing.start();
+      globalTimer.start(RELAXATION_DURATION_MS);
+    }
+  }, [phase, breathing, globalTimer]);
 
-    // Start 5-second countdown
+  // Initial mount — start countdown
+  useEffect(() => {
     countdownTimer.start(COUNTDOWN_DURATION_MS);
-
     void logEvent("PHASE_TRANSITION", {
       from_phase: "DEVICE_CHECK",
       to_phase: "COUNTDOWN",
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -88,7 +106,7 @@ export default function RelaxationPage() {
             className="flex flex-col items-center gap-6"
           >
             <h2 className="text-2xl font-bold text-white">Get Ready</h2>
-            <p className="text-slate-400">Relaxation phase begins in…</p>
+            <p className="text-slate-400">Box breathing begins in…</p>
             <CountdownTimer
               remainingMs={countdownTimer.remainingMs}
               totalMs={COUNTDOWN_DURATION_MS}
@@ -100,23 +118,55 @@ export default function RelaxationPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="flex flex-col items-center gap-8"
+            className="flex flex-col items-center gap-6"
           >
+            {/* Step label above circle */}
             <h2 className="text-xl font-semibold text-teal-300">
-              Relax and breathe naturally
+              Box Breathing
             </h2>
 
-            <BreathingCircle animate={!prefersReducedMotion} />
+            {/* Animated breathing circle */}
+            <BoxBreathingCircle
+              currentStep={breathing.currentStep}
+              stepLabel={breathing.stepLabel}
+              stepRemainingMs={breathing.stepRemainingMs}
+              stepTotalMs={breathing.stepTotalMs}
+            />
 
+            {/* Global countdown */}
             <CountdownTimer
-              remainingMs={relaxationTimer.remainingMs}
+              remainingMs={globalTimer.remainingMs}
               totalMs={RELAXATION_DURATION_MS}
               label="Time Remaining"
               size="md"
             />
 
+            {/* Cycle counter + Mute toggle */}
+            <div className="flex items-center justify-between w-full max-w-sm">
+              <p className="text-sm text-slate-400">
+                Cycle {breathing.cycleNr} of ~{breathing.totalCycles}
+              </p>
+
+              <button
+                onClick={breathing.toggleAudio}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-300 hover:bg-slate-700/60 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                aria-label={breathing.audioEnabled ? "Mute audio" : "Unmute audio"}
+                type="button"
+              >
+                {breathing.audioEnabled ? (
+                  <>
+                    <span aria-hidden="true">🔊</span> Sound On
+                  </>
+                ) : (
+                  <>
+                    <span aria-hidden="true">🔇</span> Muted
+                  </>
+                )}
+              </button>
+            </div>
+
             <p className="text-sm text-slate-500 max-w-md text-center">
-              Focus on your breathing. Inhale slowly, hold, then exhale.
+              Follow the breathing pattern. Inhale, hold, exhale, hold.
               The next phase will begin automatically.
             </p>
           </motion.div>

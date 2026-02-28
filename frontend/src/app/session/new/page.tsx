@@ -11,7 +11,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Header from "@/components/layout/Header";
 import { useSession } from "@/hooks/useSession";
-import { resumeAudioContext } from "@/lib/audio";
+import { resumeAudioContext, resetAudio } from "@/lib/audio";
 
 export default function SessionNewPage() {
   const router = useRouter();
@@ -23,6 +23,8 @@ export default function SessionNewPage() {
 
   const handleConsent = () => {
     setStep("code");
+    // Re-enable audio for new session (unkills previous session's kill switch)
+    resetAudio();
     // Pre-warm audio context on user gesture
     void resumeAudioContext();
   };

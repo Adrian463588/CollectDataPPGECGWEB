@@ -22,11 +22,21 @@ export type Phase =
 
 export type Difficulty = "EASY" | "MEDIUM" | "HARD";
 
+export type BreathingStep =
+  | "inhale"
+  | "hold_after_inhale"
+  | "exhale"
+  | "hold_after_exhale";
+
 export type EventType =
   | "SESSION_CREATED"
   | "PHASE_TRANSITION"
   | "PHASE_PAUSED"
   | "PHASE_RESUMED"
+  | "RELAXATION_START"
+  | "BREATHING_STEP_START"
+  | "BREATHING_STEP_END"
+  | "RELAXATION_END"
   | "STIMULUS_SHOWN"
   | "RESPONSE_SUBMITTED"
   | "RESPONSE_TIMEOUT"
@@ -52,6 +62,20 @@ export interface CreateParticipantRequest {
 
 // ---- Session ----
 
+export interface BreathingConfig {
+  inhale_ms: number;
+  hold_after_inhale_ms: number;
+  exhale_ms: number;
+  hold_after_exhale_ms: number;
+}
+
+export const DEFAULT_BREATHING_CONFIG: BreathingConfig = {
+  inhale_ms: 4_000,
+  hold_after_inhale_ms: 4_000,
+  exhale_ms: 4_000,
+  hold_after_exhale_ms: 4_000,
+};
+
 export interface SessionConfig {
   relaxation_duration_ms: number;
   stress_duration_ms: number;
@@ -59,6 +83,7 @@ export interface SessionConfig {
   difficulty: Difficulty;
   audio_enabled: boolean;
   score_visible: boolean;
+  breathing_config: BreathingConfig;
 }
 
 export const DEFAULT_SESSION_CONFIG: SessionConfig = {
@@ -68,6 +93,7 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   difficulty: "MEDIUM",
   audio_enabled: true,
   score_visible: true,
+  breathing_config: DEFAULT_BREATHING_CONFIG,
 };
 
 export interface CreateSessionRequest {
