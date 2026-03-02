@@ -259,7 +259,7 @@ func (e *CSVExporter) ExportParticipantSessions(ctx context.Context, w io.Writer
 	return writer.Error()
 }
 
-// ---- Phase Timeline Export (4-column: participant_code, phase, start_ts_ms, end_ts_ms) ----
+// ---- Phase Timeline Export (5-column: participant_code, phase, start_timestamp, end_timestamp, date) ----
 
 // phaseDisplayName maps internal phase enums to client-facing display names.
 var phaseDisplayName = map[string]string{
@@ -268,12 +268,19 @@ var phaseDisplayName = map[string]string{
 	"STRESS":     "Task",
 }
 
+// wibTimeFormat is HH:mm:ss.SSS+07:00 in Go layout.
+const wibTimeFormat = "15:04:05.000+07:00"
+
+// wibDateFormat is dd/MM/yyyy in Go layout.
+const wibDateFormat = "02/01/2006"
+
 // PhaseTimelineRow is a single row in the phase timeline export.
 type PhaseTimelineRow struct {
 	ParticipantCode string `json:"participant_code"`
 	Phase           string `json:"phase"`
-	StartTsMs       int64  `json:"start_ts_ms"`
-	EndTsMs         *int64 `json:"end_ts_ms"` // nil if phase not yet ended
+	StartTimestamp  string `json:"start_timestamp"`
+	EndTimestamp    string `json:"end_timestamp"` // empty if phase not yet ended
+	Date            string `json:"date"`
 }
 
 // PhaseTimelinePreview is the JSON preview response.
@@ -316,6 +323,8 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 	}
 	defer rows.Close()
 
+	loc := wib.Location()
+
 	var result []PhaseTimelineRow
 	for rows.Next() {
 		var code, internalPhase string
@@ -334,14 +343,15 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 			slog.Warn("participant code is empty for phase timeline row", "phase", internalPhase)
 		}
 
+		startWIB := startTime.In(loc)
 		row := PhaseTimelineRow{
 			ParticipantCode: code,
 			Phase:           displayName,
-			StartTsMs:       startTime.UnixMilli(),
+			StartTimestamp:  startWIB.Format(wibTimeFormat),
+			Date:            startWIB.Format(wibDateFormat),
 		}
 		if endTime != nil {
-			ms := endTime.UnixMilli()
-			row.EndTsMs = &ms
+			row.EndTimestamp = endTime.In(loc).Format(wibTimeFormat)
 		}
 
 		result = append(result, row)
@@ -350,7 +360,7 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 	return result, rows.Err()
 }
 
-// ExportPhaseTimeline writes the 4-column CSV.
+// ExportPhaseTimeline writes the 5-column CSV.
 func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) error {
 	rows, err := e.getPhaseTimelineRows(ctx)
 	if err != nil {
@@ -360,18 +370,15 @@ func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) erro
 	writer := csv.NewWriter(w)
 	defer writer.Flush()
 
-	writer.Write([]string{"participant_code", "phase", "start_ts_ms", "end_ts_ms"})
+	writer.Write([]string{"participant_code", "phase", "start_timestamp", "end_timestamp", "date"})
 
 	for _, row := range rows {
-		endStr := ""
-		if row.EndTsMs != nil {
-			endStr = fmt.Sprintf("%d", *row.EndTsMs)
-		}
 		writer.Write([]string{
 			row.ParticipantCode,
 			row.Phase,
-			fmt.Sprintf("%d", row.StartTsMs),
-			endStr,
+			row.StartTimestamp,
+			row.EndTimestamp,
+			row.Date,
 		})
 	}
 

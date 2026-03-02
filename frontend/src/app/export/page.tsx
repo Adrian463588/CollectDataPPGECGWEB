@@ -1,6 +1,6 @@
 // ============================================================
 // Export Page — Admin CSV export with preview + pagination
-// Shows a per-participant preview table matching the CSV output.
+// 5 columns: participant_code, phase, start_timestamp, end_timestamp, date
 // ============================================================
 
 "use client";
@@ -16,8 +16,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http:/
 interface PhaseRow {
   participant_code: string;
   phase: string;
-  start_ts_ms: number;
-  end_ts_ms: number | null;
+  start_timestamp: string;
+  end_timestamp: string;
+  date: string;
 }
 
 interface PreviewData {
@@ -128,7 +129,7 @@ export default function ExportPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-2xl"
+          className="w-full max-w-3xl"
         >
           {!authenticated ? (
             /* ---- Auth Gate ---- */
@@ -169,10 +170,6 @@ export default function ExportPage() {
               </h2>
               <p className="text-sm text-slate-400 mb-6">
                 Export participant phase timestamps as CSV.
-                Columns: <code className="text-indigo-300">participant_code</code>,{" "}
-                <code className="text-indigo-300">phase</code>,{" "}
-                <code className="text-indigo-300">start_ts_ms</code>,{" "}
-                <code className="text-indigo-300">end_ts_ms</code>
               </p>
 
               {/* Preview Section */}
@@ -228,17 +225,20 @@ export default function ExportPage() {
                     <table className="w-full text-sm" id="preview-table">
                       <thead>
                         <tr className="bg-slate-800/80">
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Participant Code
+                          <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            Code
                           </th>
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                             Phase
                           </th>
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Start (ms)
+                          <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            Start Time
                           </th>
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            End (ms)
+                          <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            End Time
+                          </th>
+                          <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            Date
                           </th>
                         </tr>
                       </thead>
@@ -249,10 +249,10 @@ export default function ExportPage() {
                               key={i}
                               className="border-t border-slate-800/50 hover:bg-slate-800/30 transition-colors"
                             >
-                              <td className="px-4 py-2.5 text-white font-mono text-xs">
+                              <td className="px-3 py-2.5 text-white font-mono text-xs">
                                 {row.participant_code}
                               </td>
-                              <td className="px-4 py-2.5">
+                              <td className="px-3 py-2.5">
                                 <span
                                   className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
                                     row.phase === "Relax"
@@ -265,17 +265,20 @@ export default function ExportPage() {
                                   {row.phase}
                                 </span>
                               </td>
-                              <td className="px-4 py-2.5 text-slate-300 font-mono text-xs">
-                                {row.start_ts_ms}
+                              <td className="px-3 py-2.5 text-emerald-300 font-mono text-xs">
+                                {row.start_timestamp}
                               </td>
-                              <td className="px-4 py-2.5 text-slate-300 font-mono text-xs">
-                                {row.end_ts_ms ?? "—"}
+                              <td className="px-3 py-2.5 text-amber-300 font-mono text-xs">
+                                {row.end_timestamp || "—"}
+                              </td>
+                              <td className="px-3 py-2.5 text-slate-300 font-mono text-xs">
+                                {row.date}
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={4} className="px-4 py-6 text-center text-slate-500 text-sm">
+                            <td colSpan={5} className="px-3 py-6 text-center text-slate-500 text-sm">
                               No phase data for this participant.
                             </td>
                           </tr>
@@ -316,8 +319,8 @@ export default function ExportPage() {
 
               <div className="mt-6 pt-4 border-t border-slate-700/50">
                 <p className="text-xs text-slate-600 text-center">
-                  CSV format: participant_code, phase (Relax / Routine / Task), start_ts_ms, end_ts_ms (epoch ms, WIB context).
-                  All data is pseudonymous — no PII is exported.
+                  CSV: participant_code, phase (Relax / Routine / Task),
+                  start_timestamp, end_timestamp (HH:mm:ss.SSS+07:00), date (dd/MM/yyyy WIB).
                 </p>
               </div>
             </Card>
