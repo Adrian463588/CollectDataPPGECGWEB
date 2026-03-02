@@ -290,10 +290,13 @@ type PhaseTimelinePreview struct {
 }
 
 // getPhaseTimelineRows queries phase start/end events and returns sorted rows.
+// Uses DISTINCT ON to pick exactly one start (earliest) and one end (latest)
+// per phase per session, preventing duplicate rows from multiple transition events.
 func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimelineRow, error) {
 	query := `
 		WITH phase_starts AS (
-			SELECT s.id AS session_id, p.code,
+			SELECT DISTINCT ON (s.id, ev.payload->>'to_phase')
+			       s.id AS session_id, p.code,
 			       ev.payload->>'to_phase' AS phase,
 			       ev.server_time AS start_time
 			FROM events ev
@@ -301,15 +304,18 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 			JOIN participants p ON p.id = s.participant_id
 			WHERE ev.event_type = 'PHASE_TRANSITION'
 			  AND ev.payload->>'to_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS')
+			ORDER BY s.id, ev.payload->>'to_phase', ev.server_time ASC
 		),
 		phase_ends AS (
-			SELECT s.id AS session_id,
+			SELECT DISTINCT ON (s.id, ev.payload->>'from_phase')
+			       s.id AS session_id,
 			       ev.payload->>'from_phase' AS phase,
 			       ev.server_time AS end_time
 			FROM events ev
 			JOIN sessions s ON s.id = ev.session_id
 			WHERE ev.event_type = 'PHASE_TRANSITION'
 			  AND ev.payload->>'from_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS')
+			ORDER BY s.id, ev.payload->>'from_phase', ev.server_time DESC
 		)
 		SELECT ps.code, ps.phase, ps.start_time, pe.end_time
 		FROM phase_starts ps
