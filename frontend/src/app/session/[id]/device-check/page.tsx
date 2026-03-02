@@ -1,5 +1,5 @@
 // ============================================================
-// Device Check Page — Verify wearable devices are ready
+// Device Check Page — Verify wearable devices are ready (i18n)
 // ============================================================
 
 "use client";
@@ -12,30 +12,32 @@ import Button from "@/components/ui/Button";
 import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
-
-const devices = [
-  {
-    id: "galaxy-watch",
-    name: "Samsung Galaxy Watch",
-    description: "PPG sensor on your wrist — HR monitoring app is running",
-    icon: "⌚",
-  },
-  {
-    id: "polar-h10",
-    name: "Polar H10",
-    description: "ECG chest strap is secured and connected",
-    icon: "💓",
-  },
-];
+import { useT } from "@/i18n/provider";
 
 export default function DeviceCheckPage() {
   const router = useRouter();
   const params = useParams();
   const sessionId = params.id as string;
+  const t = useT();
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
   useHeartbeat(sessionId);
+
+  const devices = [
+    {
+      id: "galaxy-watch",
+      name: t("deviceCheck.galaxyWatch"),
+      description: t("deviceCheck.galaxyWatchDesc"),
+      icon: "⌚",
+    },
+    {
+      id: "polar-h10",
+      name: t("deviceCheck.polarH10"),
+      description: t("deviceCheck.polarH10Desc"),
+      icon: "💓",
+    },
+  ];
 
   const allChecked = devices.every((d) => checked[d.id]);
 
@@ -61,10 +63,10 @@ export default function DeviceCheckPage() {
         >
           <Card>
             <h2 className="text-2xl font-bold text-white mb-2">
-              Device Check
+              {t("deviceCheck.title")}
             </h2>
             <p className="text-sm text-slate-400 mb-6">
-              Please confirm that your wearable devices are ready.
+              {t("deviceCheck.subtitle")}
             </p>
 
             <div className="space-y-4 mb-8">
@@ -118,7 +120,7 @@ export default function DeviceCheckPage() {
               size="lg"
               id="device-continue-btn"
             >
-              My Devices Are Ready — Continue
+              {t("deviceCheck.continueBtn")}
             </Button>
           </Card>
         </motion.div>

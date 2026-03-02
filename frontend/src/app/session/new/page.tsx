@@ -1,5 +1,5 @@
 // ============================================================
-// Session New — Consent + Participant Code Entry
+// Session New — Consent + Participant Code Entry (i18n)
 // ============================================================
 
 "use client";
@@ -11,10 +11,12 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { useSession } from "@/hooks/useSession";
 import { resumeAudioContext, resetAudio } from "@/lib/audio";
+import { useT } from "@/i18n/provider";
 
 export default function SessionNewPage() {
   const router = useRouter();
   const { initSession, loading, error } = useSession();
+  const t = useT();
 
   const [participantCode, setParticipantCode] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -22,9 +24,7 @@ export default function SessionNewPage() {
 
   const handleConsent = () => {
     setStep("code");
-    // Re-enable audio for new session (unkills previous session's kill switch)
     resetAudio();
-    // Pre-warm audio context on user gesture
     void resumeAudioContext();
   };
 
@@ -40,7 +40,6 @@ export default function SessionNewPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-
       <main className="flex-1 flex items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -50,24 +49,17 @@ export default function SessionNewPage() {
           {step === "consent" ? (
             <Card>
               <h2 className="text-2xl font-bold text-white mb-4">
-                Welcome to the Study
+                {t("consent.title")}
               </h2>
               <div className="prose prose-invert prose-sm mb-6">
                 <p className="text-slate-300 leading-relaxed">
-                  Thank you for participating in this early stress detection research study.
-                  During this session, you will complete a{" "}
-                  <strong>5-minute relaxation phase</strong> followed by a{" "}
-                  <strong>5-minute mental arithmetic task</strong>.
+                  {t("consent.p1")}
                 </p>
                 <p className="text-slate-300 leading-relaxed mt-3">
-                  Your physiological signals will be recorded by the wearable devices
-                  you are wearing (Samsung Galaxy Watch and Polar H10). This web
-                  application manages the experiment timeline only — it does not
-                  access your device data directly.
+                  {t("consent.p2")}
                 </p>
                 <p className="text-slate-300 leading-relaxed mt-3">
-                  All data collected is pseudonymous. No personally identifiable
-                  information is stored.
+                  {t("consent.p3")}
                 </p>
               </div>
 
@@ -80,8 +72,7 @@ export default function SessionNewPage() {
                   id="consent-checkbox"
                 />
                 <span className="text-sm text-slate-300 group-hover:text-slate-200">
-                  I have read and understood the study information above. I agree to
-                  participate in this session.
+                  {t("consent.agree")}
                 </span>
               </label>
 
@@ -92,23 +83,23 @@ export default function SessionNewPage() {
                 size="lg"
                 id="consent-agree-btn"
               >
-                I Agree — Continue
+                {t("consent.continueBtn")}
               </Button>
             </Card>
           ) : (
             <Card>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Participant Code
+                {t("session.participantCode")}
               </h2>
               <p className="text-sm text-slate-400 mb-6">
-                Enter the code provided by your researcher.
+                {t("session.codePrompt")}
               </p>
 
               <input
                 type="text"
                 value={participantCode}
                 onChange={(e) => setParticipantCode(e.target.value.toUpperCase())}
-                placeholder="e.g. P001"
+                placeholder={t("session.participantPlaceholder")}
                 maxLength={50}
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-lg font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
                 id="participant-code-input"
@@ -130,7 +121,7 @@ export default function SessionNewPage() {
                 size="lg"
                 id="start-session-btn"
               >
-                Start Session
+                {t("session.startSession")}
               </Button>
             </Card>
           )}

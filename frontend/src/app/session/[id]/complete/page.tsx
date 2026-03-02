@@ -1,5 +1,5 @@
 // ============================================================
-// Complete Page — Session completion summary
+// Complete Page — Session completion summary (i18n)
 // ============================================================
 
 "use client";
@@ -14,14 +14,15 @@ import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { getSessionState } from "@/lib/api-client";
 import { stopAllAudio } from "@/lib/audio";
 import type { SessionState } from "@/lib/types";
+import { useT } from "@/i18n/provider";
 
 export default function CompletePage() {
   const params = useParams();
   const sessionId = params.id as string;
   const [sessionState, setSessionState] = useState<SessionState | null>(null);
+  const t = useT();
 
   useEffect(() => {
-    // Defense-in-depth: kill any lingering audio on completion
     stopAllAudio();
 
     async function load() {
@@ -63,32 +64,31 @@ export default function CompletePage() {
             </motion.div>
 
             <h2 className="text-3xl font-bold text-white mb-3">
-              Session Complete!
+              {t("complete.title")}
             </h2>
             <p className="text-slate-400 mb-8">
-              Thank you for participating in this study. Your data has been
-              recorded successfully.
+              {t("complete.subtitle")}
             </p>
 
             {sessionState && (
               <div className="bg-slate-800/50 rounded-xl p-6 mb-8 text-left space-y-3">
                 <h3 className="font-semibold text-white text-sm uppercase tracking-wider mb-3">
-                  Session Summary
+                  {t("complete.summary")}
                 </h3>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Session ID</span>
+                  <span className="text-slate-400">{t("complete.sessionId")}</span>
                   <span className="text-white font-mono text-xs">
                     {sessionId.slice(0, 8)}…
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Status</span>
+                  <span className="text-slate-400">{t("complete.status")}</span>
                   <span className="text-emerald-400 font-medium">
                     {sessionState.status}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Total Elapsed</span>
+                  <span className="text-slate-400">{t("complete.elapsed")}</span>
                   <span className="text-white font-mono">
                     {sessionState.elapsed_ms
                       ? `${Math.round(sessionState.elapsed_ms / 1000)}s`
@@ -100,8 +100,7 @@ export default function CompletePage() {
 
             <div className="space-y-3">
               <p className="text-sm text-slate-500">
-                You may now remove your devices. Please inform the researcher
-                that your session is complete.
+                {t("complete.removeDevices")}
               </p>
               <Button
                 variant="secondary"
@@ -109,7 +108,7 @@ export default function CompletePage() {
                 className="w-full"
                 id="new-session-btn"
               >
-                Start New Session
+                {t("complete.newSession")}
               </Button>
             </div>
           </Card>

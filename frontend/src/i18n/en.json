@@ -25,13 +25,22 @@
     "startButton": "Start New Session",
     "exportButton": "Export Data"
   },
+  "consent": {
+    "title": "Welcome to the Study",
+    "p1": "Thank you for participating in this early stress detection research study. During this session, you will complete a 5-minute relaxation phase followed by a 5-minute mental arithmetic task.",
+    "p2": "Your physiological signals will be recorded by the wearable devices you are wearing (Samsung Galaxy Watch and Polar H10). This web application manages the experiment timeline only \u2014 it does not access your device data directly.",
+    "p3": "All data collected is pseudonymous. No personally identifiable information is stored.",
+    "agree": "I have read and understood the study information above. I agree to participate in this session.",
+    "continueBtn": "I Agree \u2014 Continue"
+  },
   "session": {
     "newSession": "New Session",
     "participantCode": "Participant Code",
     "participantPlaceholder": "e.g., P001",
     "startSession": "Start Session",
     "codeRequired": "Please enter a participant code.",
-    "creating": "Creating Session…"
+    "creating": "Creating Session…",
+    "codePrompt": "Enter the code provided by your researcher."
   },
   "phases": {
     "intro": "Intro",
@@ -44,12 +53,14 @@
   },
   "deviceCheck": {
     "title": "Device Check",
-    "subtitle": "Ensure all devices are connected and ready before starting the experiment.",
+    "subtitle": "Please confirm that your wearable devices are ready.",
     "galaxyWatch": "Samsung Galaxy Watch",
+    "galaxyWatchDesc": "PPG sensor on your wrist — HR monitoring app is running",
     "polarH10": "Polar H10",
+    "polarH10Desc": "ECG chest strap is secured and connected",
     "connected": "Connected",
     "waiting": "Waiting…",
-    "continueBtn": "Continue to Countdown"
+    "continueBtn": "My Devices Are Ready — Continue"
   },
   "relaxation": {
     "title": "Relaxation Phase",
@@ -81,9 +92,13 @@
     "clear": "Clear"
   },
   "complete": {
-    "title": "Session Complete",
-    "subtitle": "Thank you for participating in this study.",
+    "title": "Session Complete!",
+    "subtitle": "Thank you for participating in this study. Your data has been recorded successfully.",
     "summary": "Session Summary",
+    "sessionId": "Session ID",
+    "status": "Status",
+    "elapsed": "Total Elapsed",
+    "removeDevices": "You may now remove your devices. Please inform the researcher that your session is complete.",
     "newSession": "Start New Session",
     "exportData": "Export Data"
   },

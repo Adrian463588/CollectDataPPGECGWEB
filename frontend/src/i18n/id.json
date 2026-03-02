@@ -25,13 +25,22 @@
     "startButton": "Mulai Sesi Baru",
     "exportButton": "Ekspor Data"
   },
+  "consent": {
+    "title": "Selamat Datang di Studi",
+    "p1": "Terima kasih telah berpartisipasi dalam studi penelitian deteksi stres dini ini. Selama sesi ini, Anda akan menyelesaikan fase relaksasi 5 menit diikuti oleh tugas aritmatika mental 5 menit.",
+    "p2": "Sinyal fisiologis Anda akan direkam oleh perangkat wearable yang Anda kenakan (Samsung Galaxy Watch dan Polar H10). Aplikasi web ini hanya mengelola timeline eksperimen \u2014 tidak mengakses data perangkat Anda secara langsung.",
+    "p3": "Semua data yang dikumpulkan bersifat pseudonim. Tidak ada informasi pengenal pribadi yang disimpan.",
+    "agree": "Saya telah membaca dan memahami informasi studi di atas. Saya setuju untuk berpartisipasi dalam sesi ini.",
+    "continueBtn": "Saya Setuju \u2014 Lanjutkan"
+  },
   "session": {
     "newSession": "Sesi Baru",
     "participantCode": "Kode Partisipan",
     "participantPlaceholder": "contoh: P001",
     "startSession": "Mulai Sesi",
     "codeRequired": "Silakan masukkan kode partisipan.",
-    "creating": "Membuat Sesi…"
+    "creating": "Membuat Sesi…",
+    "codePrompt": "Masukkan kode yang diberikan oleh peneliti Anda."
   },
   "phases": {
     "intro": "Pendahuluan",
@@ -44,12 +53,14 @@
   },
   "deviceCheck": {
     "title": "Pemeriksaan Perangkat",
-    "subtitle": "Pastikan semua perangkat terhubung dan siap sebelum memulai eksperimen.",
+    "subtitle": "Pastikan perangkat wearable Anda sudah siap.",
     "galaxyWatch": "Samsung Galaxy Watch",
+    "galaxyWatchDesc": "Sensor PPG di pergelangan tangan — aplikasi pemantauan detak jantung berjalan",
     "polarH10": "Polar H10",
+    "polarH10Desc": "Tali dada ECG terpasang dan terhubung",
     "connected": "Terhubung",
     "waiting": "Menunggu…",
-    "continueBtn": "Lanjut ke Hitung Mundur"
+    "continueBtn": "Perangkat Saya Siap — Lanjutkan"
   },
   "relaxation": {
     "title": "Fase Relaksasi",
@@ -81,9 +92,13 @@
     "clear": "Hapus"
   },
   "complete": {
-    "title": "Sesi Selesai",
-    "subtitle": "Terima kasih telah berpartisipasi dalam studi ini.",
+    "title": "Sesi Selesai!",
+    "subtitle": "Terima kasih telah berpartisipasi dalam studi ini. Data Anda telah berhasil dicatat.",
     "summary": "Ringkasan Sesi",
+    "sessionId": "ID Sesi",
+    "status": "Status",
+    "elapsed": "Total Waktu",
+    "removeDevices": "Anda sekarang dapat melepas perangkat Anda. Silakan beri tahu peneliti bahwa sesi Anda telah selesai.",
     "newSession": "Mulai Sesi Baru",
     "exportData": "Ekspor Data"
   },
