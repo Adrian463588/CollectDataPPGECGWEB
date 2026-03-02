@@ -1,5 +1,5 @@
 // ============================================================
-// ProgressBar — Session phase progress indicator
+// ProgressBar — Session phase progress indicator (i18n)
 // ============================================================
 
 "use client";
@@ -7,22 +7,24 @@
 import { motion } from "framer-motion";
 import type { Phase } from "@/lib/types";
 import { getAllPhases, getPhaseIndex } from "@/lib/phase-machine";
+import { useT } from "@/i18n/provider";
 
 interface ProgressBarProps {
   currentPhase: Phase;
 }
 
-const phaseLabels: Record<Phase, string> = {
-  INTRO: "Intro",
-  DEVICE_CHECK: "Devices",
-  COUNTDOWN: "Ready",
-  RELAXATION: "Relax",
-  ROUTINE: "Routine",
-  STRESS: "Task",
-  COMPLETE: "Done",
+const phaseI18nKeys: Record<Phase, string> = {
+  INTRO: "phases.intro",
+  DEVICE_CHECK: "phases.deviceCheck",
+  COUNTDOWN: "phases.countdown",
+  RELAXATION: "phases.relaxation",
+  ROUTINE: "phases.routine",
+  STRESS: "phases.stress",
+  COMPLETE: "phases.complete",
 };
 
 export default function ProgressBar({ currentPhase }: ProgressBarProps) {
+  const t = useT();
   const phases = getAllPhases();
   const currentIndex = getPhaseIndex(currentPhase);
 
@@ -62,7 +64,7 @@ export default function ProgressBar({ currentPhase }: ProgressBarProps) {
               `}
               style={{ transform: "translateX(-25%)" }}
             >
-              {phaseLabels[phase]}
+              {t(phaseI18nKeys[phase])}
             </span>
 
             {/* Connector line */}

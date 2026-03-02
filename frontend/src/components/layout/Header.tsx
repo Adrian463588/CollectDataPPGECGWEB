@@ -1,5 +1,5 @@
 // ============================================================
-// Header — Sticky app bar with navigation
+// Header — Sticky app bar with navigation + language toggle
 // Shows nav links only when NOT in an active experiment phase.
 // ============================================================
 
@@ -8,6 +8,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/i18n/provider";
 
 interface HeaderProps {
   children?: ReactNode;
@@ -23,7 +24,7 @@ const HIDE_NAV_PATTERNS = [
 
 export default function Header({ children }: HeaderProps) {
   const pathname = usePathname();
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Experiment Controller";
+  const { locale, setLocale, t } = useLanguage();
 
   // Hide nav links during active experiment phases
   const showNav = !HIDE_NAV_PATTERNS.some((p) => pathname.includes(p));
@@ -39,7 +40,7 @@ export default function Header({ children }: HeaderProps) {
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
           <span className="text-white text-sm font-bold">E</span>
         </div>
-        <h1 className="text-lg font-semibold text-white">{appName}</h1>
+        <h1 className="text-lg font-semibold text-white">{t("header.title")}</h1>
       </div>
 
       <div className="flex items-center gap-4">
@@ -53,7 +54,7 @@ export default function Header({ children }: HeaderProps) {
                   : "text-slate-400 hover:text-white hover:bg-slate-800/50"
               }`}
             >
-              New Session
+              {t("session.newSession")}
             </Link>
             <Link
               href="/export"
@@ -63,10 +64,23 @@ export default function Header({ children }: HeaderProps) {
                   : "text-slate-400 hover:text-white hover:bg-slate-800/50"
               }`}
             >
-              Export
+              {t("header.export")}
             </Link>
           </nav>
         )}
+
+        {/* Language Toggle */}
+        <button
+          onClick={() => setLocale(locale === "en" ? "id" : "en")}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 hover:text-white border border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+          id="lang-toggle-btn"
+          aria-label="Toggle language"
+          title={locale === "en" ? "Ganti ke Bahasa Indonesia" : "Switch to English"}
+        >
+          <span className="text-sm">🌐</span>
+          <span>{locale === "en" ? "EN" : "ID"}</span>
+        </button>
+
         {children && <div className="flex items-center gap-4">{children}</div>}
       </div>
     </header>

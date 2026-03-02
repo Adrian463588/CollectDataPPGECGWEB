@@ -1,0 +1,126 @@
+{
+  "common": {
+    "next": "Next →",
+    "previous": "← Previous",
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "save": "Save",
+    "download": "Download",
+    "loading": "Loading…",
+    "error": "Error",
+    "retry": "Retry",
+    "authenticate": "Authenticate"
+  },
+  "header": {
+    "title": "Experiment Controller",
+    "export": "Export"
+  },
+  "footer": {
+    "copyright": "Stress Detection Study — WIB Timestamps"
+  },
+  "home": {
+    "title": "Experiment Controller",
+    "subtitle": "Stress Detection Study",
+    "description": "Interactive experiment orchestrator for early stress detection research using Samsung Galaxy Watch (PPG) + Polar H10 (ECG).",
+    "startButton": "Start New Session",
+    "exportButton": "Export Data"
+  },
+  "session": {
+    "newSession": "New Session",
+    "participantCode": "Participant Code",
+    "participantPlaceholder": "e.g., P001",
+    "startSession": "Start Session",
+    "codeRequired": "Please enter a participant code.",
+    "creating": "Creating Session…"
+  },
+  "phases": {
+    "intro": "Intro",
+    "deviceCheck": "Devices",
+    "countdown": "Ready",
+    "relaxation": "Relax",
+    "routine": "Routine",
+    "stress": "Task",
+    "complete": "Done"
+  },
+  "deviceCheck": {
+    "title": "Device Check",
+    "subtitle": "Ensure all devices are connected and ready before starting the experiment.",
+    "galaxyWatch": "Samsung Galaxy Watch",
+    "polarH10": "Polar H10",
+    "connected": "Connected",
+    "waiting": "Waiting…",
+    "continueBtn": "Continue to Countdown"
+  },
+  "relaxation": {
+    "title": "Relaxation Phase",
+    "subtitle": "Follow the breathing circle. Inhale… hold… exhale… hold…",
+    "breatheIn": "Breathe In",
+    "hold": "Hold",
+    "breatheOut": "Breathe Out",
+    "countdownTitle": "Get Ready",
+    "countdownSubtitle": "Relaxation phase starting soon…"
+  },
+  "routine": {
+    "title": "Researcher Notes",
+    "subtitle": "Record any observations before the stress phase begins. Click <strong>Continue</strong> when ready.",
+    "placeholder": "Enter researcher observations...",
+    "saveNote": "Save Note",
+    "saving": "Saving…",
+    "saved": "✓ Saved — Add Another?",
+    "savedNotes": "Saved Notes",
+    "continueBtn": "Continue to Stress Phase →"
+  },
+  "stress": {
+    "title": "Mental Arithmetic",
+    "subtitle": "Solve the problems as quickly and accurately as possible.",
+    "score": "Score",
+    "correct": "Correct",
+    "wrong": "Wrong",
+    "timeUp": "Time's up!",
+    "submit": "Submit",
+    "clear": "Clear"
+  },
+  "complete": {
+    "title": "Session Complete",
+    "subtitle": "Thank you for participating in this study.",
+    "summary": "Session Summary",
+    "newSession": "Start New Session",
+    "exportData": "Export Data"
+  },
+  "skip": {
+    "button": "⏩ Skip Phase (Dev)",
+    "title": "Skip Phase?",
+    "message": "Are you sure you want to skip the {phase} phase? This action will be logged.",
+    "confirm": "Yes, Skip",
+    "cancel": "Cancel"
+  },
+  "export": {
+    "title": "Data Export",
+    "subtitle": "Enter the admin key to access CSV exports.",
+    "adminKeyPlaceholder": "Admin Key",
+    "invalidKey": "Invalid admin key. Please try again.",
+    "serverError": "Cannot reach the backend. Is the server running?",
+    "dashboardTitle": "📊 Phase Timeline Export",
+    "dashboardSubtitle": "Export participant phase timestamps as CSV.",
+    "previewLoading": "Loading preview…",
+    "previewError": "Failed to load preview data.",
+    "noData": "No participant data found. Complete a session to see data here.",
+    "participant": "Participant",
+    "of": "of",
+    "downloadCsv": "⬇ Download CSV",
+    "downloading": "Downloading…",
+    "downloaded": "✓ Downloaded — Download Again?",
+    "downloadError": "✗ Error — Retry",
+    "lastExport": "Last export",
+    "csvNote": "CSV: participant_code, phase (Relax / Routine / Task), start_timestamp, end_timestamp (ISO 8601 WIB), date (dd/MM/yyyy).",
+    "dataNote": "All data is pseudonymous — no PII is exported.",
+    "columns": {
+      "code": "Code",
+      "phase": "Phase",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "date": "Date"
+    },
+    "noPhaseData": "No phase data for this participant."
+  }
+}

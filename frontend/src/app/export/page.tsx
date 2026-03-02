@@ -1,6 +1,7 @@
 // ============================================================
 // Export Page — Admin CSV export with preview + pagination
 // 5 columns: participant_code, phase, start_timestamp, end_timestamp, date
+// i18n: all strings via useT()
 // ============================================================
 
 "use client";
@@ -8,6 +9,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import Card from "@/components/ui/Card";
+import { useT } from "@/i18n/provider";
 
 type ExportStatus = "idle" | "loading" | "success" | "error";
 
@@ -38,6 +40,8 @@ function formatWIBFilename(): string {
 }
 
 export default function ExportPage() {
+  const t = useT();
+
   const [adminKey, setAdminKey] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -61,12 +65,12 @@ export default function ExportPage() {
       if (res.ok) {
         setAuthenticated(true);
       } else {
-        setAuthError("Invalid admin key. Please try again.");
+        setAuthError(t("export.invalidKey"));
       }
     } catch {
-      setAuthError("Cannot reach the backend. Is the server running?");
+      setAuthError(t("export.serverError"));
     }
-  }, [adminKey]);
+  }, [adminKey, t]);
 
   // Load preview on auth
   useEffect(() => {
@@ -85,10 +89,10 @@ export default function ExportPage() {
         setCurrentParticipantIndex(0);
       })
       .catch(() => {
-        setPreviewError("Failed to load preview data.");
+        setPreviewError(t("export.previewError"));
       })
       .finally(() => setPreviewLoading(false));
-  }, [authenticated, adminKey]);
+  }, [authenticated, adminKey, t]);
 
   // Download CSV
   const handleDownload = useCallback(async () => {
@@ -134,15 +138,15 @@ export default function ExportPage() {
           {!authenticated ? (
             /* ---- Auth Gate ---- */
             <Card>
-              <h2 className="text-2xl font-bold text-white mb-2">Data Export</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">{t("export.title")}</h2>
               <p className="text-sm text-slate-400 mb-6">
-                Enter the admin key to access CSV exports.
+                {t("export.subtitle")}
               </p>
               <input
                 type="password"
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
-                placeholder="Admin Key"
+                placeholder={t("export.adminKeyPlaceholder")}
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
                 id="admin-key-input"
                 autoFocus
@@ -159,24 +163,24 @@ export default function ExportPage() {
                 className="w-full py-3 px-6 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 id="auth-btn"
               >
-                Authenticate
+                {t("common.authenticate")}
               </button>
             </Card>
           ) : (
             /* ---- Export Dashboard ---- */
             <Card>
               <h2 className="text-2xl font-bold text-white mb-2">
-                📊 Phase Timeline Export
+                {t("export.dashboardTitle")}
               </h2>
               <p className="text-sm text-slate-400 mb-6">
-                Export participant phase timestamps as CSV.
+                {t("export.dashboardSubtitle")}
               </p>
 
               {/* Preview Section */}
               {previewLoading && (
                 <div className="text-center py-8 text-slate-400">
                   <span className="animate-spin inline-block mr-2">⏳</span>
-                  Loading preview…
+                  {t("export.previewLoading")}
                 </div>
               )}
 
@@ -195,13 +199,13 @@ export default function ExportPage() {
                       id="prev-participant-btn"
                       aria-label="Previous participant"
                     >
-                      ← Previous
+                      {t("common.previous")}
                     </button>
 
                     <div className="text-center">
                       <p className="text-lg font-bold text-white">{currentCode}</p>
                       <p className="text-xs text-slate-500">
-                        Participant {currentParticipantIndex + 1} of {participants.length}
+                        {t("export.participant")} {currentParticipantIndex + 1} {t("export.of")} {participants.length}
                       </p>
                     </div>
 
@@ -216,7 +220,7 @@ export default function ExportPage() {
                       id="next-participant-btn"
                       aria-label="Next participant"
                     >
-                      Next →
+                      {t("common.next")}
                     </button>
                   </div>
 
@@ -226,19 +230,19 @@ export default function ExportPage() {
                       <thead>
                         <tr className="bg-slate-800/80">
                           <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Code
+                            {t("export.columns.code")}
                           </th>
                           <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Phase
+                            {t("export.columns.phase")}
                           </th>
                           <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Start Time
+                            {t("export.columns.startTime")}
                           </th>
                           <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            End Time
+                            {t("export.columns.endTime")}
                           </th>
                           <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Date
+                            {t("export.columns.date")}
                           </th>
                         </tr>
                       </thead>
@@ -279,7 +283,7 @@ export default function ExportPage() {
                         ) : (
                           <tr>
                             <td colSpan={5} className="px-3 py-6 text-center text-slate-500 text-sm">
-                              No phase data for this participant.
+                              {t("export.noPhaseData")}
                             </td>
                           </tr>
                         )}
@@ -291,7 +295,7 @@ export default function ExportPage() {
 
               {preview && participants.length === 0 && (
                 <div className="text-center py-8 text-slate-500 mb-6">
-                  No participant data found. Complete a session to see data here.
+                  {t("export.noData")}
                 </div>
               )}
 
@@ -303,24 +307,23 @@ export default function ExportPage() {
                 id="download-csv-btn"
               >
                 {downloadStatus === "loading"
-                  ? "Downloading…"
+                  ? t("export.downloading")
                   : downloadStatus === "success"
-                    ? "✓ Downloaded — Download Again?"
+                    ? t("export.downloaded")
                     : downloadStatus === "error"
-                      ? "✗ Error — Retry"
-                      : "⬇ Download CSV"}
+                      ? t("export.downloadError")
+                      : t("export.downloadCsv")}
               </button>
 
               {lastExport && (
                 <p className="text-xs text-slate-500 mt-3 text-center">
-                  Last export: {lastExport}
+                  {t("export.lastExport")}: {lastExport}
                 </p>
               )}
 
               <div className="mt-6 pt-4 border-t border-slate-700/50">
                 <p className="text-xs text-slate-600 text-center">
-                  CSV: participant_code, phase (Relax / Routine / Task),
-                  start_timestamp, end_timestamp (HH:mm:ss.SSS+07:00), date (dd/MM/yyyy WIB).
+                  {t("export.csvNote")}
                 </p>
               </div>
             </Card>

@@ -1,12 +1,14 @@
 // ============================================================
 // SkipConfirmModal — Confirmation dialog for skipping a phase
 // Features: focus trap, keyboard handling (Esc/Enter), overlay
+// i18n: all strings via useT()
 // ============================================================
 
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useT } from "@/i18n/provider";
 
 interface SkipConfirmModalProps {
   open: boolean;
@@ -21,6 +23,7 @@ export default function SkipConfirmModal({
   onCancel,
   phaseName,
 }: SkipConfirmModalProps) {
+  const t = useT();
   const confirmRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -100,11 +103,10 @@ export default function SkipConfirmModal({
           >
             <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
               <h3 className="text-lg font-bold text-white mb-2">
-                Skip {phaseName}?
+                {t("skip.title")}
               </h3>
               <p className="text-sm text-slate-400 mb-6">
-                Skip this phase and continue to the next? This action is logged
-                and intended for development only.
+                {t("skip.message", { phase: phaseName })}
               </p>
 
               <div className="flex gap-3">
@@ -113,7 +115,7 @@ export default function SkipConfirmModal({
                   className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500"
                   id="skip-cancel-btn"
                 >
-                  Cancel
+                  {t("skip.cancel")}
                 </button>
                 <button
                   ref={confirmRef}
@@ -121,7 +123,7 @@ export default function SkipConfirmModal({
                   className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-amber-600 hover:bg-amber-500 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400"
                   id="skip-confirm-btn"
                 >
-                  Confirm Skip
+                  {t("skip.confirm")}
                 </button>
               </div>
             </div>

@@ -1,0 +1,126 @@
+{
+  "common": {
+    "next": "Berikutnya →",
+    "previous": "← Sebelumnya",
+    "continue": "Lanjutkan",
+    "cancel": "Batal",
+    "save": "Simpan",
+    "download": "Unduh",
+    "loading": "Memuat…",
+    "error": "Kesalahan",
+    "retry": "Coba Lagi",
+    "authenticate": "Autentikasi"
+  },
+  "header": {
+    "title": "Pengontrol Eksperimen",
+    "export": "Ekspor"
+  },
+  "footer": {
+    "copyright": "Studi Deteksi Stres — Waktu WIB"
+  },
+  "home": {
+    "title": "Pengontrol Eksperimen",
+    "subtitle": "Studi Deteksi Stres",
+    "description": "Orkestrator eksperimen interaktif untuk penelitian deteksi stres dini menggunakan Samsung Galaxy Watch (PPG) + Polar H10 (ECG).",
+    "startButton": "Mulai Sesi Baru",
+    "exportButton": "Ekspor Data"
+  },
+  "session": {
+    "newSession": "Sesi Baru",
+    "participantCode": "Kode Partisipan",
+    "participantPlaceholder": "contoh: P001",
+    "startSession": "Mulai Sesi",
+    "codeRequired": "Silakan masukkan kode partisipan.",
+    "creating": "Membuat Sesi…"
+  },
+  "phases": {
+    "intro": "Pendahuluan",
+    "deviceCheck": "Perangkat",
+    "countdown": "Siap",
+    "relaxation": "Relaksasi",
+    "routine": "Rutinitas",
+    "stress": "Tugas",
+    "complete": "Selesai"
+  },
+  "deviceCheck": {
+    "title": "Pemeriksaan Perangkat",
+    "subtitle": "Pastikan semua perangkat terhubung dan siap sebelum memulai eksperimen.",
+    "galaxyWatch": "Samsung Galaxy Watch",
+    "polarH10": "Polar H10",
+    "connected": "Terhubung",
+    "waiting": "Menunggu…",
+    "continueBtn": "Lanjut ke Hitung Mundur"
+  },
+  "relaxation": {
+    "title": "Fase Relaksasi",
+    "subtitle": "Ikuti lingkaran pernapasan. Tarik napas… tahan… hembuskan… tahan…",
+    "breatheIn": "Tarik Napas",
+    "hold": "Tahan",
+    "breatheOut": "Hembuskan",
+    "countdownTitle": "Bersiap",
+    "countdownSubtitle": "Fase relaksasi akan segera dimulai…"
+  },
+  "routine": {
+    "title": "Catatan Peneliti",
+    "subtitle": "Catat observasi sebelum fase stres dimulai. Klik <strong>Lanjutkan</strong> jika sudah siap.",
+    "placeholder": "Masukkan observasi peneliti...",
+    "saveNote": "Simpan Catatan",
+    "saving": "Menyimpan…",
+    "saved": "✓ Tersimpan — Tambah Lagi?",
+    "savedNotes": "Catatan Tersimpan",
+    "continueBtn": "Lanjut ke Fase Stres →"
+  },
+  "stress": {
+    "title": "Aritmatika Mental",
+    "subtitle": "Selesaikan soal secepat dan seakurat mungkin.",
+    "score": "Skor",
+    "correct": "Benar",
+    "wrong": "Salah",
+    "timeUp": "Waktu habis!",
+    "submit": "Kirim",
+    "clear": "Hapus"
+  },
+  "complete": {
+    "title": "Sesi Selesai",
+    "subtitle": "Terima kasih telah berpartisipasi dalam studi ini.",
+    "summary": "Ringkasan Sesi",
+    "newSession": "Mulai Sesi Baru",
+    "exportData": "Ekspor Data"
+  },
+  "skip": {
+    "button": "⏩ Lewati Fase (Dev)",
+    "title": "Lewati Fase?",
+    "message": "Apakah Anda yakin ingin melewati fase {phase}? Tindakan ini akan dicatat.",
+    "confirm": "Ya, Lewati",
+    "cancel": "Batal"
+  },
+  "export": {
+    "title": "Ekspor Data",
+    "subtitle": "Masukkan kunci admin untuk mengakses ekspor CSV.",
+    "adminKeyPlaceholder": "Kunci Admin",
+    "invalidKey": "Kunci admin tidak valid. Silakan coba lagi.",
+    "serverError": "Tidak dapat terhubung ke backend. Apakah server berjalan?",
+    "dashboardTitle": "📊 Ekspor Timeline Fase",
+    "dashboardSubtitle": "Ekspor timestamp fase partisipan sebagai CSV.",
+    "previewLoading": "Memuat pratinjau…",
+    "previewError": "Gagal memuat data pratinjau.",
+    "noData": "Data partisipan tidak ditemukan. Selesaikan sesi untuk melihat data di sini.",
+    "participant": "Partisipan",
+    "of": "dari",
+    "downloadCsv": "⬇ Unduh CSV",
+    "downloading": "Mengunduh…",
+    "downloaded": "✓ Terunduh — Unduh Lagi?",
+    "downloadError": "✗ Kesalahan — Coba Lagi",
+    "lastExport": "Ekspor terakhir",
+    "csvNote": "CSV: kode_partisipan, fase (Relax / Routine / Task), start_timestamp, end_timestamp (ISO 8601 WIB), tanggal (dd/MM/yyyy).",
+    "dataNote": "Semua data bersifat pseudonim — tidak ada PII yang diekspor.",
+    "columns": {
+      "code": "Kode",
+      "phase": "Fase",
+      "startTime": "Waktu Mulai",
+      "endTime": "Waktu Selesai",
+      "date": "Tanggal"
+    },
+    "noPhaseData": "Tidak ada data fase untuk partisipan ini."
+  }
+}

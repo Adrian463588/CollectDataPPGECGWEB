@@ -268,8 +268,8 @@ var phaseDisplayName = map[string]string{
 	"STRESS":     "Task",
 }
 
-// wibTimeFormat is HH:mm:ss.SSS+07:00 in Go layout.
-const wibTimeFormat = "15:04:05.000+07:00"
+// wibTimestampFormat is full ISO 8601 with milliseconds and WIB offset.
+const wibTimestampFormat = "2006-01-02T15:04:05.000+07:00"
 
 // wibDateFormat is dd/MM/yyyy in Go layout.
 const wibDateFormat = "02/01/2006"
@@ -289,38 +289,38 @@ type PhaseTimelinePreview struct {
 	Data         map[string][]PhaseTimelineRow `json:"data"`
 }
 
-// getPhaseTimelineRows queries phase start/end events and returns sorted rows.
-// Uses DISTINCT ON to pick exactly one start (earliest) and one end (latest)
-// per phase per session, preventing duplicate rows from multiple transition events.
+// getPhaseTimelineRows queries phase transitions and returns sorted rows.
+//
+// INTEGRITY GUARANTEE: end(phase_A) == start(phase_B) because both are derived
+// from the SAME transition event row ({from: A, to: B, server_time: T}).
+// A single "transitions" CTE captures each to_phase event (earliest per session).
+// End time for phase X is the transition_time of the event where from_phase=X.
 func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimelineRow, error) {
 	query := `
-		WITH phase_starts AS (
+		WITH transitions AS (
 			SELECT DISTINCT ON (s.id, ev.payload->>'to_phase')
-			       s.id AS session_id, p.code,
-			       ev.payload->>'to_phase' AS phase,
-			       ev.server_time AS start_time
+				s.id AS session_id, p.code,
+				ev.payload->>'from_phase' AS from_phase,
+				ev.payload->>'to_phase' AS to_phase,
+				ev.server_time AS transition_time
 			FROM events ev
 			JOIN sessions s ON s.id = ev.session_id
 			JOIN participants p ON p.id = s.participant_id
 			WHERE ev.event_type = 'PHASE_TRANSITION'
-			  AND ev.payload->>'to_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS')
+			  AND ev.payload->>'to_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS', 'COMPLETE')
 			ORDER BY s.id, ev.payload->>'to_phase', ev.server_time ASC
-		),
-		phase_ends AS (
-			SELECT DISTINCT ON (s.id, ev.payload->>'from_phase')
-			       s.id AS session_id,
-			       ev.payload->>'from_phase' AS phase,
-			       ev.server_time AS end_time
-			FROM events ev
-			JOIN sessions s ON s.id = ev.session_id
-			WHERE ev.event_type = 'PHASE_TRANSITION'
-			  AND ev.payload->>'from_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS')
-			ORDER BY s.id, ev.payload->>'from_phase', ev.server_time DESC
 		)
-		SELECT ps.code, ps.phase, ps.start_time, pe.end_time
-		FROM phase_starts ps
-		LEFT JOIN phase_ends pe ON pe.session_id = ps.session_id AND pe.phase = ps.phase
-		ORDER BY ps.code ASC, ps.start_time ASC
+		SELECT
+			t_start.code,
+			t_start.to_phase AS phase,
+			t_start.transition_time AS start_time,
+			t_end.transition_time AS end_time
+		FROM transitions t_start
+		LEFT JOIN transitions t_end
+			ON t_end.session_id = t_start.session_id
+			AND t_end.from_phase = t_start.to_phase
+		WHERE t_start.to_phase IN ('RELAXATION', 'ROUTINE', 'STRESS')
+		ORDER BY t_start.code ASC, t_start.transition_time ASC
 	`
 
 	rows, err := e.sessions.DB().Query(ctx, query)
@@ -353,11 +353,11 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 		row := PhaseTimelineRow{
 			ParticipantCode: code,
 			Phase:           displayName,
-			StartTimestamp:  startWIB.Format(wibTimeFormat),
+			StartTimestamp:  startWIB.Format(wibTimestampFormat),
 			Date:            startWIB.Format(wibDateFormat),
 		}
 		if endTime != nil {
-			row.EndTimestamp = endTime.In(loc).Format(wibTimeFormat)
+			row.EndTimestamp = endTime.In(loc).Format(wibTimestampFormat)
 		}
 
 		result = append(result, row)
