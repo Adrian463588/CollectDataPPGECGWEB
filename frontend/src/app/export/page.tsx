@@ -16,7 +16,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http:/
 interface PhaseRow {
   participant_code: string;
   phase: string;
-  timestamp: string;
+  start_ts_ms: number;
+  end_ts_ms: number | null;
 }
 
 interface PreviewData {
@@ -170,7 +171,8 @@ export default function ExportPage() {
                 Export participant phase timestamps as CSV.
                 Columns: <code className="text-indigo-300">participant_code</code>,{" "}
                 <code className="text-indigo-300">phase</code>,{" "}
-                <code className="text-indigo-300">timestamp</code>
+                <code className="text-indigo-300">start_ts_ms</code>,{" "}
+                <code className="text-indigo-300">end_ts_ms</code>
               </p>
 
               {/* Preview Section */}
@@ -233,7 +235,10 @@ export default function ExportPage() {
                             Phase
                           </th>
                           <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Timestamp
+                            Start (ms)
+                          </th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            End (ms)
                           </th>
                         </tr>
                       </thead>
@@ -261,13 +266,16 @@ export default function ExportPage() {
                                 </span>
                               </td>
                               <td className="px-4 py-2.5 text-slate-300 font-mono text-xs">
-                                {row.timestamp}
+                                {row.start_ts_ms}
+                              </td>
+                              <td className="px-4 py-2.5 text-slate-300 font-mono text-xs">
+                                {row.end_ts_ms ?? "—"}
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={3} className="px-4 py-6 text-center text-slate-500 text-sm">
+                            <td colSpan={4} className="px-4 py-6 text-center text-slate-500 text-sm">
                               No phase data for this participant.
                             </td>
                           </tr>
@@ -308,7 +316,7 @@ export default function ExportPage() {
 
               <div className="mt-6 pt-4 border-t border-slate-700/50">
                 <p className="text-xs text-slate-600 text-center">
-                  CSV format: participant_code, phase (Relax / Routine / Task), timestamp (WIB ms precision).
+                  CSV format: participant_code, phase (Relax / Routine / Task), start_ts_ms, end_ts_ms (epoch ms, WIB context).
                   All data is pseudonymous — no PII is exported.
                 </p>
               </div>

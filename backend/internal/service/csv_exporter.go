@@ -259,7 +259,7 @@ func (e *CSVExporter) ExportParticipantSessions(ctx context.Context, w io.Writer
 	return writer.Error()
 }
 
-// ---- Phase Timeline Export (3-column: participant_code, phase, timestamp) ----
+// ---- Phase Timeline Export (4-column: participant_code, phase, start_ts_ms, end_ts_ms) ----
 
 // phaseDisplayName maps internal phase enums to client-facing display names.
 var phaseDisplayName = map[string]string{
@@ -268,18 +268,12 @@ var phaseDisplayName = map[string]string{
 	"STRESS":     "Task",
 }
 
-// phaseOrder defines sort priority for deterministic output.
-var phaseOrder = map[string]int{
-	"RELAXATION": 1,
-	"ROUTINE":    2,
-	"STRESS":     3,
-}
-
 // PhaseTimelineRow is a single row in the phase timeline export.
 type PhaseTimelineRow struct {
 	ParticipantCode string `json:"participant_code"`
 	Phase           string `json:"phase"`
-	Timestamp       string `json:"timestamp"`
+	StartTsMs       int64  `json:"start_ts_ms"`
+	EndTsMs         *int64 `json:"end_ts_ms"` // nil if phase not yet ended
 }
 
 // PhaseTimelinePreview is the JSON preview response.
@@ -288,16 +282,32 @@ type PhaseTimelinePreview struct {
 	Data         map[string][]PhaseTimelineRow `json:"data"`
 }
 
-// getPhaseTimelineRows queries all phase-start events and returns sorted rows.
+// getPhaseTimelineRows queries phase start/end events and returns sorted rows.
 func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimelineRow, error) {
 	query := `
-		SELECT p.code, ev.payload->>'to_phase' AS to_phase, ev.server_time
-		FROM events ev
-		JOIN sessions s ON s.id = ev.session_id
-		JOIN participants p ON p.id = s.participant_id
-		WHERE ev.event_type = 'PHASE_TRANSITION'
-		  AND ev.payload->>'to_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS')
-		ORDER BY p.code ASC, ev.server_time ASC
+		WITH phase_starts AS (
+			SELECT s.id AS session_id, p.code,
+			       ev.payload->>'to_phase' AS phase,
+			       ev.server_time AS start_time
+			FROM events ev
+			JOIN sessions s ON s.id = ev.session_id
+			JOIN participants p ON p.id = s.participant_id
+			WHERE ev.event_type = 'PHASE_TRANSITION'
+			  AND ev.payload->>'to_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS')
+		),
+		phase_ends AS (
+			SELECT s.id AS session_id,
+			       ev.payload->>'from_phase' AS phase,
+			       ev.server_time AS end_time
+			FROM events ev
+			JOIN sessions s ON s.id = ev.session_id
+			WHERE ev.event_type = 'PHASE_TRANSITION'
+			  AND ev.payload->>'from_phase' IN ('RELAXATION', 'ROUTINE', 'STRESS')
+		)
+		SELECT ps.code, ps.phase, ps.start_time, pe.end_time
+		FROM phase_starts ps
+		LEFT JOIN phase_ends pe ON pe.session_id = ps.session_id AND pe.phase = ps.phase
+		ORDER BY ps.code ASC, ps.start_time ASC
 	`
 
 	rows, err := e.sessions.DB().Query(ctx, query)
@@ -308,32 +318,39 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 
 	var result []PhaseTimelineRow
 	for rows.Next() {
-		var code, toPhase string
-		var serverTime time.Time
-		if err := rows.Scan(&code, &toPhase, &serverTime); err != nil {
+		var code, internalPhase string
+		var startTime time.Time
+		var endTime *time.Time
+		if err := rows.Scan(&code, &internalPhase, &startTime, &endTime); err != nil {
 			return nil, fmt.Errorf("scan phase timeline row: %w", err)
 		}
 
-		displayName, ok := phaseDisplayName[toPhase]
+		displayName, ok := phaseDisplayName[internalPhase]
 		if !ok {
 			continue
 		}
 
 		if code == "" {
-			slog.Warn("participant code is empty for phase timeline row", "to_phase", toPhase)
+			slog.Warn("participant code is empty for phase timeline row", "phase", internalPhase)
 		}
 
-		result = append(result, PhaseTimelineRow{
+		row := PhaseTimelineRow{
 			ParticipantCode: code,
 			Phase:           displayName,
-			Timestamp:       wib.Format(serverTime) + " WIB",
-		})
+			StartTsMs:       startTime.UnixMilli(),
+		}
+		if endTime != nil {
+			ms := endTime.UnixMilli()
+			row.EndTsMs = &ms
+		}
+
+		result = append(result, row)
 	}
 
 	return result, rows.Err()
 }
 
-// ExportPhaseTimeline writes the 3-column CSV: participant_code, phase, timestamp.
+// ExportPhaseTimeline writes the 4-column CSV.
 func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) error {
 	rows, err := e.getPhaseTimelineRows(ctx)
 	if err != nil {
@@ -343,11 +360,19 @@ func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) erro
 	writer := csv.NewWriter(w)
 	defer writer.Flush()
 
-	// Header
-	writer.Write([]string{"participant_code", "phase", "timestamp"})
+	writer.Write([]string{"participant_code", "phase", "start_ts_ms", "end_ts_ms"})
 
 	for _, row := range rows {
-		writer.Write([]string{row.ParticipantCode, row.Phase, row.Timestamp})
+		endStr := ""
+		if row.EndTsMs != nil {
+			endStr = fmt.Sprintf("%d", *row.EndTsMs)
+		}
+		writer.Write([]string{
+			row.ParticipantCode,
+			row.Phase,
+			fmt.Sprintf("%d", row.StartTsMs),
+			endStr,
+		})
 	}
 
 	return writer.Error()
