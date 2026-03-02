@@ -19,6 +19,11 @@ type SessionStore struct {
 	db *pgxpool.Pool
 }
 
+// DB returns the underlying database pool for direct queries.
+func (s *SessionStore) DB() *pgxpool.Pool {
+	return s.db
+}
+
 func NewSessionStore(db *pgxpool.Pool) *SessionStore {
 	return &SessionStore{db: db}
 }

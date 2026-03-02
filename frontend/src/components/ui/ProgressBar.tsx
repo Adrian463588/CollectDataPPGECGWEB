@@ -17,6 +17,7 @@ const phaseLabels: Record<Phase, string> = {
   DEVICE_CHECK: "Devices",
   COUNTDOWN: "Ready",
   RELAXATION: "Relax",
+  ROUTINE: "Notes",
   STRESS: "Task",
   COMPLETE: "Done",
 };

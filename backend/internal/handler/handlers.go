@@ -5,6 +5,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -380,6 +381,25 @@ func (h *ExportHandler) AllEvents(w http.ResponseWriter, r *http.Request) {
 	if err := h.exporter.ExportAllEvents(r.Context(), w); err != nil {
 		slog.Error("export all events failed", "error", err)
 	}
+}
+
+func (h *ExportHandler) PhaseTimelineCSV(w http.ResponseWriter, r *http.Request) {
+	filename := fmt.Sprintf("participants_%s_WIB.csv", wib.Now().Format("2006-01-02_15-04"))
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	if err := h.exporter.ExportPhaseTimeline(r.Context(), w); err != nil {
+		slog.Error("export phase timeline failed", "error", err)
+	}
+}
+
+func (h *ExportHandler) PhaseTimelinePreview(w http.ResponseWriter, r *http.Request) {
+	preview, err := h.exporter.GetPhaseTimelinePreview(r.Context())
+	if err != nil {
+		slog.Error("phase timeline preview failed", "error", err)
+		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to load preview")
+		return
+	}
+	writeJSON(w, http.StatusOK, preview)
 }
 
 // ---- Admin Handler ----
