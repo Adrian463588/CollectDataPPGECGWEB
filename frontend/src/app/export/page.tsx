@@ -2,14 +2,18 @@
 // Export Page — Admin CSV export with preview + pagination
 // 5 columns: participant_code, phase, start_timestamp, end_timestamp, date
 // i18n: all strings via useT()
+// URL param: /export?participant=CODE
 // ============================================================
 
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 import { useT } from "@/i18n/provider";
+
 
 type ExportStatus = "idle" | "loading" | "success" | "error";
 
@@ -39,8 +43,10 @@ function formatWIBFilename(): string {
   return `participants_${y}-${m}-${d}_${h}-${min}_WIB.csv`;
 }
 
-export default function ExportPage() {
+function ExportContent() {
   const t = useT();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [adminKey, setAdminKey] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
@@ -52,7 +58,26 @@ export default function ExportPage() {
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
-  const [currentParticipantIndex, setCurrentParticipantIndex] = useState(0);
+
+  // Download reset timer
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derived: URL-param participant selection
+  const participants = preview?.participants ?? [];
+  const paramCode = searchParams.get("participant");
+  const currentCode =
+    participants.includes(paramCode ?? "") ? (paramCode ?? "") : (participants[0] ?? "");
+  const currentIndex = participants.indexOf(currentCode);
+  const currentRows = preview?.data[currentCode] ?? [];
+  const isFirst = currentIndex <= 0;
+  const isLast = currentIndex >= participants.length - 1;
+
+  // Sync URL when participant list loads for first time
+  useEffect(() => {
+    if (participants.length > 0 && !paramCode) {
+      router.replace(`/export?participant=${encodeURIComponent(participants[0])}`);
+    }
+  }, [participants, paramCode, router]);
 
   // Auth handler
   const handleAuth = useCallback(async () => {
@@ -86,7 +111,6 @@ export default function ExportPage() {
       })
       .then((data: PreviewData) => {
         setPreview(data);
-        setCurrentParticipantIndex(0);
       })
       .catch(() => {
         setPreviewError(t("export.previewError"));
@@ -94,9 +118,17 @@ export default function ExportPage() {
       .finally(() => setPreviewLoading(false));
   }, [authenticated, adminKey, t]);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    };
+  }, []);
+
   // Download CSV
   const handleDownload = useCallback(async () => {
     setDownloadStatus("loading");
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     try {
       const res = await fetch(`${API_BASE}/api/admin/export/participants.csv`, {
         headers: { "X-Admin-Key": adminKey.trim() },
@@ -115,17 +147,28 @@ export default function ExportPage() {
 
       setDownloadStatus("success");
       setLastExport(new Date().toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }) + " WIB");
+      // Reset button back to idle after 3 seconds
+      resetTimerRef.current = setTimeout(() => setDownloadStatus("idle"), 3000);
     } catch {
       setDownloadStatus("error");
+      resetTimerRef.current = setTimeout(() => setDownloadStatus("idle"), 3000);
     }
   }, [adminKey]);
 
-  // Pagination
-  const participants = preview?.participants ?? [];
-  const currentCode = participants[currentParticipantIndex] ?? "";
-  const currentRows = preview?.data[currentCode] ?? [];
-  const isFirst = currentParticipantIndex === 0;
-  const isLast = currentParticipantIndex >= participants.length - 1;
+  // Pagination handlers — update URL param
+  const goToPrev = useCallback(() => {
+    if (currentIndex > 0) {
+      const prev = participants[currentIndex - 1];
+      router.replace(`/export?participant=${encodeURIComponent(prev)}`);
+    }
+  }, [currentIndex, participants, router]);
+
+  const goToNext = useCallback(() => {
+    if (currentIndex < participants.length - 1) {
+      const next = participants[currentIndex + 1];
+      router.replace(`/export?participant=${encodeURIComponent(next)}`);
+    }
+  }, [currentIndex, participants, router]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -155,16 +198,16 @@ export default function ExportPage() {
                 }}
               />
               {authError && (
-                <p className="text-sm text-red-400 mb-4">{authError}</p>
+                <p className="text-sm text-red-400 mb-4" role="alert">{authError}</p>
               )}
-              <button
+              <Button
                 onClick={handleAuth}
                 disabled={!adminKey.trim()}
-                className="w-full py-3 px-6 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 id="auth-btn"
+                className="w-full"
               >
                 {t("common.authenticate")}
-              </button>
+              </Button>
             </Card>
           ) : (
             /* ---- Export Dashboard ---- */
@@ -185,43 +228,41 @@ export default function ExportPage() {
               )}
 
               {previewError && (
-                <p className="text-sm text-red-400 mb-4">{previewError}</p>
+                <p className="text-sm text-red-400 mb-4" role="alert">{previewError}</p>
               )}
 
               {preview && participants.length > 0 && (
                 <div className="mb-6">
                   {/* Participant Pagination Header */}
                   <div className="flex items-center justify-between mb-3">
-                    <button
-                      onClick={() => setCurrentParticipantIndex((i) => Math.max(0, i - 1))}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={goToPrev}
                       disabled={isFirst}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       id="prev-participant-btn"
                       aria-label="Previous participant"
                     >
                       {t("common.previous")}
-                    </button>
+                    </Button>
 
                     <div className="text-center">
-                      <p className="text-lg font-bold text-white">{currentCode}</p>
+                      <p className="text-lg font-bold text-white font-mono">{currentCode}</p>
                       <p className="text-xs text-slate-500">
-                        {t("export.participant")} {currentParticipantIndex + 1} {t("export.of")} {participants.length}
+                        {t("export.participant")} {currentIndex + 1} {t("export.of")} {participants.length}
                       </p>
                     </div>
 
-                    <button
-                      onClick={() =>
-                        setCurrentParticipantIndex((i) =>
-                          Math.min(participants.length - 1, i + 1)
-                        )
-                      }
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={goToNext}
                       disabled={isLast}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       id="next-participant-btn"
                       aria-label="Next participant"
                     >
                       {t("common.next")}
-                    </button>
+                    </Button>
                   </div>
 
                   {/* Preview Table */}
@@ -300,11 +341,13 @@ export default function ExportPage() {
               )}
 
               {/* Download Button */}
-              <button
+              <Button
                 onClick={handleDownload}
+                loading={downloadStatus === "loading"}
                 disabled={downloadStatus === "loading"}
-                className="w-full py-3 px-6 rounded-xl font-bold text-lg text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 id="download-csv-btn"
+                className="w-full text-lg font-bold py-4"
+                size="lg"
               >
                 {downloadStatus === "loading"
                   ? t("export.downloading")
@@ -313,7 +356,7 @@ export default function ExportPage() {
                     : downloadStatus === "error"
                       ? t("export.downloadError")
                       : t("export.downloadCsv")}
-              </button>
+              </Button>
 
               {lastExport && (
                 <p className="text-xs text-slate-500 mt-3 text-center">
@@ -331,5 +374,20 @@ export default function ExportPage() {
         </motion.div>
       </main>
     </div>
+  );
+}
+
+// Suspense boundary required by Next.js App Router for useSearchParams
+export default function ExportPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-pulse text-slate-400">Loading…</div>
+        </div>
+      }
+    >
+      <ExportContent />
+    </Suspense>
   );
 }

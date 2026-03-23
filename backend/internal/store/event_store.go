@@ -5,7 +5,9 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -14,15 +16,18 @@ import (
 	"github.com/experiment-controller/backend/internal/wib"
 )
 
-type EventStore struct {
+// ErrSessionNotFound is returned when events are posted for a session that does not exist.
+var ErrSessionNotFound = errors.New("session not found")
+
+type eventStoreImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewEventStore(db *pgxpool.Pool) *EventStore {
-	return &EventStore{db: db}
+func NewEventStore(db *pgxpool.Pool) EventStore {
+	return &eventStoreImpl{db: db}
 }
 
-func (s *EventStore) Create(ctx context.Context, sessionID uuid.UUID, item model.BatchEventItem) (*model.Event, bool, error) {
+func (s *eventStoreImpl) Create(ctx context.Context, sessionID uuid.UUID, item model.BatchEventItem) (*model.Event, bool, error) {
 	serverTime := wib.Now()
 	offset := wib.ComputeOffset(serverTime, item.ClientTimeMs)
 
@@ -37,16 +42,20 @@ func (s *EventStore) Create(ctx context.Context, sessionID uuid.UUID, item model
 		&event.ClientTimeMs, &event.ClientOffsetMs, &event.IdempotencyKey, &event.Payload, &event.CreatedAt)
 
 	if err != nil {
-		// Check if it was a duplicate (ON CONFLICT DO NOTHING returns no rows)
+		// ON CONFLICT DO NOTHING returns no rows → treat as duplicate
 		if err.Error() == "no rows in result set" {
-			return nil, true, nil // duplicate
+			return nil, true, nil
+		}
+		// FK violation: session_id does not exist in sessions table
+		if strings.Contains(err.Error(), "23503") || strings.Contains(err.Error(), "foreign key") {
+			return nil, false, ErrSessionNotFound
 		}
 		return nil, false, fmt.Errorf("create event: %w", err)
 	}
 	return &event, false, nil
 }
 
-func (s *EventStore) BatchCreate(ctx context.Context, sessionID uuid.UUID, items []model.BatchEventItem) (accepted, duplicates int, err error) {
+func (s *eventStoreImpl) BatchCreate(ctx context.Context, sessionID uuid.UUID, items []model.BatchEventItem) (accepted, duplicates int, err error) {
 	for _, item := range items {
 		_, isDup, e := s.Create(ctx, sessionID, item)
 		if e != nil {
@@ -61,7 +70,7 @@ func (s *EventStore) BatchCreate(ctx context.Context, sessionID uuid.UUID, items
 	return accepted, duplicates, nil
 }
 
-func (s *EventStore) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]model.Event, error) {
+func (s *eventStoreImpl) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]model.Event, error) {
 	rows, err := s.db.Query(ctx,
 		`SELECT id, session_id, event_type, server_time, client_time_ms, client_offset_ms, idempotency_key, payload, created_at
 		 FROM events WHERE session_id = $1 ORDER BY server_time ASC`,
@@ -85,7 +94,7 @@ func (s *EventStore) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]
 }
 
 // ListAll returns all events across all sessions ordered by server_time.
-func (s *EventStore) ListAll(ctx context.Context) ([]model.Event, error) {
+func (s *eventStoreImpl) ListAll(ctx context.Context) ([]model.Event, error) {
 	rows, err := s.db.Query(ctx,
 		`SELECT id, session_id, event_type, server_time, client_time_ms, client_offset_ms, idempotency_key, payload, created_at
 		 FROM events ORDER BY server_time ASC`,
@@ -107,7 +116,7 @@ func (s *EventStore) ListAll(ctx context.Context) ([]model.Event, error) {
 	return events, nil
 }
 
-func (s *EventStore) GetPhaseTimestamps(ctx context.Context, sessionID uuid.UUID) (map[string]string, error) {
+func (s *eventStoreImpl) GetPhaseTimestamps(ctx context.Context, sessionID uuid.UUID) (map[string]string, error) {
 	rows, err := s.db.Query(ctx,
 		`SELECT event_type, server_time, payload
 		 FROM events

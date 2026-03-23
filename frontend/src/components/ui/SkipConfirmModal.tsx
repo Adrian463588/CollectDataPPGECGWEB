@@ -99,13 +99,14 @@ export default function SkipConfirmModal({
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             role="dialog"
             aria-modal="true"
-            aria-label={`Skip ${phaseName} phase confirmation`}
+            aria-label={t("skip.title")}
+            aria-describedby="skip-modal-message"
           >
             <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
               <h3 className="text-lg font-bold text-white mb-2">
                 {t("skip.title")}
               </h3>
-              <p className="text-sm text-slate-400 mb-6">
+              <p id="skip-modal-message" className="text-sm text-slate-400 mb-6">
                 {t("skip.message", { phase: phaseName })}
               </p>
 

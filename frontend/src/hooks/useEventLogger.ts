@@ -11,7 +11,7 @@ import type { EventType, EventPayload } from "@/lib/types";
 export function useEventLogger(sessionId: string | null) {
   useEffect(() => {
     if (!sessionId) return;
-    startEventBuffer();
+    startEventBuffer(sessionId);
     return () => {
       void stopEventBuffer();
     };

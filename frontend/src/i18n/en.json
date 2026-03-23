@@ -28,10 +28,10 @@
   "consent": {
     "title": "Welcome to the Study",
     "p1": "Thank you for participating in this early stress detection research study. During this session, you will complete a 5-minute relaxation phase followed by a 5-minute mental arithmetic task.",
-    "p2": "Your physiological signals will be recorded by the wearable devices you are wearing (Samsung Galaxy Watch and Polar H10). This web application manages the experiment timeline only \u2014 it does not access your device data directly.",
+    "p2": "Your physiological signals will be recorded by the wearable devices you are wearing (Samsung Galaxy Watch and Polar H10). This web application manages the experiment timeline only — it does not access your device data directly.",
     "p3": "All data collected is pseudonymous. No personally identifiable information is stored.",
     "agree": "I have read and understood the study information above. I agree to participate in this session.",
-    "continueBtn": "I Agree \u2014 Continue"
+    "continueBtn": "I Agree — Continue"
   },
   "session": {
     "newSession": "New Session",
@@ -69,17 +69,27 @@
     "hold": "Hold",
     "breatheOut": "Breathe Out",
     "countdownTitle": "Get Ready",
-    "countdownSubtitle": "Relaxation phase starting soon…"
+    "countdownSubtitle": "Box breathing begins in…",
+    "boxBreathing": "Box Breathing",
+    "timeRemaining": "Time Remaining",
+    "cycle": "Cycle",
+    "ofCycles": "of",
+    "soundOn": "Sound On",
+    "muted": "Muted",
+    "instruction": "Follow the breathing pattern. Inhale, hold, exhale, hold. The next phase will begin automatically."
   },
   "routine": {
-    "title": "Researcher Notes",
-    "subtitle": "Record any observations before the stress phase begins. Click <strong>Continue</strong> when ready.",
+    "title": "Routine Phase",
+    "subtitle": "Take a short break. Record any observations before the task phase begins.",
+    "subtitleAction": "Click Continue when ready.",
     "placeholder": "Enter researcher observations...",
     "saveNote": "Save Note",
     "saving": "Saving…",
     "saved": "✓ Saved — Add Another?",
+    "saveError": "✗ Error — Retry",
     "savedNotes": "Saved Notes",
-    "continueBtn": "Continue to Stress Phase →"
+    "noteInfo": "chars — saved at",
+    "continueBtn": "Continue to Task Phase →"
   },
   "stress": {
     "title": "Mental Arithmetic",

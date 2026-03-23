@@ -20,7 +20,7 @@ type Config struct {
 
 func Load() *Config {
 	return &Config{
-		Port:              getEnv("PORT", "8080"),
+		Port:              getEnv("PORT", "8081"),
 		DatabaseURL:       getEnv("DATABASE_URL", "postgres://expctrl:expctrl@localhost:5432/expctrl?sslmode=disable"),
 		AdminAPIKey:       getEnv("ADMIN_API_KEY", "change-me-in-production"),
 		CORSOrigins:       strings.Split(getEnv("CORS_ORIGINS", "http://localhost:3000"), ","),
