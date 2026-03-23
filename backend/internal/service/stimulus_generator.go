@@ -29,9 +29,14 @@ func (g *StimulusGenerator) GenerateForSession(sessionID uuid.UUID, cfg model.Se
 
 	// Calculate expected number of problems
 	// stress_duration_ms / question_timeout_ms (approximate upper bound)
-	count := cfg.StressDurationMs / cfg.QuestionTimeoutMs
-	if count < 10 {
+	var count int
+	if cfg.QuestionTimeoutMs <= 0 {
 		count = 10
+	} else {
+		count = cfg.StressDurationMs / cfg.QuestionTimeoutMs
+		if count < 10 {
+			count = 10
+		}
 	}
 	// Add 50% buffer since some questions are answered quickly
 	count = count + count/2

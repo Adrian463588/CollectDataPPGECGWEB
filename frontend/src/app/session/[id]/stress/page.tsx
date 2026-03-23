@@ -26,6 +26,7 @@ import {
   stopAllAudio,
 } from "@/lib/audio";
 import { DEFAULT_SESSION_CONFIG } from "@/lib/types";
+import { useT } from "@/i18n/provider";
 
 const STRESS_DURATION_MS = DEFAULT_SESSION_CONFIG.stress_duration_ms;
 const QUESTION_TIMEOUT_MS = DEFAULT_SESSION_CONFIG.question_timeout_ms;
@@ -48,6 +49,7 @@ function generateProblem(): Problem {
 }
 
 export default function StressPage() {
+  const t = useT();
   const router = useRouter();
   const params = useParams();
   const sessionId = params.id as string;
@@ -233,7 +235,7 @@ export default function StressPage() {
         <CountdownTimer
           remainingMs={phaseTimer.remainingMs}
           totalMs={STRESS_DURATION_MS}
-          label="Phase Time"
+          label={t("relaxation.timeRemaining")}
           size="sm"
         />
 
@@ -283,7 +285,7 @@ export default function StressPage() {
             className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-300 bg-amber-900/30 border border-amber-700/40 hover:bg-amber-800/40 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50"
             id="skip-phase-btn"
           >
-            ⏩ Skip Phase (Dev)
+            {t("skip.button")}
           </button>
         )}
       </main>
@@ -293,7 +295,7 @@ export default function StressPage() {
         open={skipModalOpen}
         onConfirm={handleSkipConfirm}
         onCancel={handleSkipCancel}
-        phaseName="Stress"
+        phaseName={t("phases.stress")}
       />
     </div>
   );

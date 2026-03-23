@@ -4,14 +4,24 @@
 
 "use client";
 
-import { motion } from "framer-motion";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { motion, type HTMLMotionProps } from "framer-motion";
+import type { ReactNode } from "react";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// We pick only the native button attrs we actually need, then spread safe MotionProps
+interface ButtonProps {
   variant?: "primary" | "secondary" | "danger" | "ghost";
   size?: "sm" | "md" | "lg";
   children: ReactNode;
   loading?: boolean;
+  // Explicit native props (avoids Framer Motion / React event handler type conflict)
+  id?: string;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  className?: string;
+  "aria-label"?: string;
+  "aria-describedby"?: string;
+  form?: string;
 }
 
 const variants = {
@@ -40,20 +50,25 @@ export default function Button({
   className = "",
   ...props
 }: ButtonProps) {
+  // Use HTMLMotionProps directly to avoid ButtonHTMLAttributes ↔ MotionProps type conflict
+  const motionProps: HTMLMotionProps<"button"> = {
+    whileHover: { scale: disabled ? 1 : 1.02 },
+    whileTap: { scale: disabled ? 1 : 0.98 },
+    className: `
+      inline-flex items-center justify-center rounded-xl font-semibold
+      transition-colors duration-200 focus:outline-none focus:ring-2
+      focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900
+      disabled:opacity-50 disabled:cursor-not-allowed
+      ${variants[variant]} ${sizes[size]} ${className}
+    `,
+    disabled: disabled || loading,
+    "aria-busy": loading,
+    "aria-disabled": disabled || loading,
+    ...props,
+  };
+
   return (
-    <motion.button
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-      className={`
-        inline-flex items-center justify-center rounded-xl font-semibold
-        transition-colors duration-200 focus:outline-none focus:ring-2
-        focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${variants[variant]} ${sizes[size]} ${className}
-      `}
-      disabled={disabled || loading}
-      {...props}
-    >
+    <motion.button {...motionProps}>
       {loading && (
         <svg
           className="animate-spin -ml-1 mr-2 h-4 w-4"

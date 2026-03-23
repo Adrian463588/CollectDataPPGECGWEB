@@ -22,7 +22,9 @@ import type {
   ApiError,
 } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+// Always route through the server-side proxy (/api-proxy).
+// Never expose the raw backend URL to the browser — it breaks LAN/cross-origin access.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api-proxy";
 
 // ---- Helpers ----
 

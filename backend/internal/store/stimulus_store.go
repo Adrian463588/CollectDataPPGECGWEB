@@ -13,15 +13,15 @@ import (
 	"github.com/experiment-controller/backend/internal/model"
 )
 
-type StimulusStore struct {
+type stimulusStoreImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewStimulusStore(db *pgxpool.Pool) *StimulusStore {
-	return &StimulusStore{db: db}
+func NewStimulusStore(db *pgxpool.Pool) StimulusStore {
+	return &stimulusStoreImpl{db: db}
 }
 
-func (s *StimulusStore) BulkCreate(ctx context.Context, stimuli []model.Stimulus) error {
+func (s *stimulusStoreImpl) BulkCreate(ctx context.Context, stimuli []model.Stimulus) error {
 	for _, st := range stimuli {
 		_, err := s.db.Exec(ctx,
 			`INSERT INTO stimuli (id, session_id, sequence_nr, problem_text, correct_answer, difficulty)
@@ -35,7 +35,7 @@ func (s *StimulusStore) BulkCreate(ctx context.Context, stimuli []model.Stimulus
 	return nil
 }
 
-func (s *StimulusStore) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]model.Stimulus, error) {
+func (s *stimulusStoreImpl) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]model.Stimulus, error) {
 	rows, err := s.db.Query(ctx,
 		`SELECT id, session_id, sequence_nr, problem_text, correct_answer, difficulty, created_at
 		 FROM stimuli WHERE session_id = $1 ORDER BY sequence_nr ASC`,
@@ -57,7 +57,7 @@ func (s *StimulusStore) ListBySession(ctx context.Context, sessionID uuid.UUID) 
 	return stimuli, nil
 }
 
-func (s *StimulusStore) GetByID(ctx context.Context, id uuid.UUID) (*model.Stimulus, error) {
+func (s *stimulusStoreImpl) GetByID(ctx context.Context, id uuid.UUID) (*model.Stimulus, error) {
 	var st model.Stimulus
 	err := s.db.QueryRow(ctx,
 		`SELECT id, session_id, sequence_nr, problem_text, correct_answer, difficulty, created_at
@@ -70,7 +70,7 @@ func (s *StimulusStore) GetByID(ctx context.Context, id uuid.UUID) (*model.Stimu
 	return &st, nil
 }
 
-func (s *StimulusStore) CountBySession(ctx context.Context, sessionID uuid.UUID) (int, error) {
+func (s *stimulusStoreImpl) CountBySession(ctx context.Context, sessionID uuid.UUID) (int, error) {
 	var count int
 	err := s.db.QueryRow(ctx,
 		`SELECT COUNT(*) FROM stimuli WHERE session_id = $1`, sessionID,

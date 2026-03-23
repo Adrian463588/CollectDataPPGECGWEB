@@ -25,8 +25,12 @@ describe("Phase Machine", () => {
       expect(isValidTransition("COUNTDOWN", "RELAXATION")).toBe(true);
     });
 
-    it("allows RELAXATION → STRESS", () => {
-      expect(isValidTransition("RELAXATION", "STRESS")).toBe(true);
+    it("allows RELAXATION → ROUTINE", () => {
+      expect(isValidTransition("RELAXATION", "ROUTINE")).toBe(true);
+    });
+
+    it("allows ROUTINE → STRESS", () => {
+      expect(isValidTransition("ROUTINE", "STRESS")).toBe(true);
     });
 
     it("allows STRESS → COMPLETE", () => {
@@ -85,16 +89,16 @@ describe("Phase Machine", () => {
   });
 
   describe("getAllPhases / getPhaseIndex", () => {
-    it("returns 6 phases", () => {
-      expect(getAllPhases()).toHaveLength(6);
+    it("returns 7 phases", () => {
+      expect(getAllPhases()).toHaveLength(7);
     });
 
     it("INTRO is index 0", () => {
       expect(getPhaseIndex("INTRO")).toBe(0);
     });
 
-    it("COMPLETE is index 5", () => {
-      expect(getPhaseIndex("COMPLETE")).toBe(5);
+    it("COMPLETE is index 6", () => {
+      expect(getPhaseIndex("COMPLETE")).toBe(6);
     });
   });
 });

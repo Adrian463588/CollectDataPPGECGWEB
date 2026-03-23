@@ -116,33 +116,49 @@ async function flush(): Promise<void> {
       } catch {
         // Non-critical
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to flush events:", err);
-      // Increment retry count
-      for (const event of batch) {
-        event._retries++;
-        if (event._retries >= MAX_RETRIES) {
-          console.error("Event exceeded max retries, dropping:", event.idempotency_key);
-          memoryBuffer = memoryBuffer.filter(
-            (e) => e.idempotency_key !== event.idempotency_key
-          );
+
+      // If session not found (404), do not retry — drop immediately
+      if (err?.status === 404) {
+        console.warn(`Session ${sessionId} not found, dropping ${batch.length} stale events`);
+        const sentKeys = new Set(batch.map((e) => e.idempotency_key));
+        memoryBuffer = memoryBuffer.filter((e) => !sentKeys.has(e.idempotency_key));
+        try {
+          const database = await getDB();
+          const tx = database.transaction(STORE_NAME, "readwrite");
+          for (const key of sentKeys) {
+            await tx.store.delete(key);
+          }
+          await tx.done;
+        } catch {}
+      } else {
+        // Increment retry count for other errors
+        for (const event of batch) {
+          event._retries++;
+          if (event._retries >= MAX_RETRIES) {
+            console.error("Event exceeded max retries, dropping:", event.idempotency_key);
+            memoryBuffer = memoryBuffer.filter(
+              (e) => e.idempotency_key !== event.idempotency_key
+            );
+          }
         }
+        // Backoff before next attempt
+        await new Promise((r) =>
+          setTimeout(r, BASE_BACKOFF_MS * Math.pow(2, batch[0]._retries))
+        );
       }
-      // Backoff before next attempt
-      await new Promise((r) =>
-        setTimeout(r, BASE_BACKOFF_MS * Math.pow(2, batch[0]._retries))
-      );
     }
   }
 }
 
 /** Start the periodic flush timer */
-export function startEventBuffer(): void {
+export function startEventBuffer(currentSessionId?: string): void {
   if (flushTimer) return;
   flushTimer = setInterval(() => void flush(), FLUSH_INTERVAL_MS);
 
-  // Also flush any events persisted in IndexedDB from a previous session
-  void recoverPersistedEvents();
+  // Purge stale events from previous sessions, then recover valid ones
+  void clearStaleEvents(currentSessionId).then(() => recoverPersistedEvents(currentSessionId));
 }
 
 /** Stop the flush timer and perform a final flush */
@@ -154,18 +170,58 @@ export async function stopEventBuffer(): Promise<void> {
   await flush();
 }
 
+/** Remove events from IndexedDB + memory that belong to a different session */
+async function clearStaleEvents(currentSessionId?: string): Promise<void> {
+  if (!currentSessionId) return;
+  try {
+    const database = await getDB();
+    const persisted = await database.getAll(STORE_NAME);
+    const tx = database.transaction(STORE_NAME, "readwrite");
+    let cleared = 0;
+    for (const event of persisted) {
+      if ((event as BufferedEvent)._sessionId !== currentSessionId) {
+        await tx.store.delete(event.idempotency_key);
+        cleared++;
+      }
+    }
+    await tx.done;
+    // Also remove from memory
+    memoryBuffer = memoryBuffer.filter((e) => e._sessionId === currentSessionId);
+    if (cleared > 0) {
+      console.info(`Cleared ${cleared} stale events from previous sessions`);
+    }
+  } catch {
+    // Non-critical
+  }
+}
+
 /** Recover events persisted in IndexedDB (after a page reload) */
-async function recoverPersistedEvents(): Promise<void> {
+async function recoverPersistedEvents(currentSessionId?: string): Promise<void> {
   try {
     const database = await getDB();
     const persisted = await database.getAll(STORE_NAME);
     for (const event of persisted) {
-      if (!memoryBuffer.find((e) => e.idempotency_key === event.idempotency_key)) {
-        memoryBuffer.push(event as BufferedEvent);
+      const buffered = event as BufferedEvent;
+      // Only recover events for the current session
+      if (currentSessionId && buffered._sessionId !== currentSessionId) continue;
+      if (!memoryBuffer.find((e) => e.idempotency_key === buffered.idempotency_key)) {
+        memoryBuffer.push(buffered);
       }
     }
   } catch {
     // IndexedDB may be unavailable
+  }
+}
+
+/** Clear ALL buffered events (for manual cleanup after DB reset) */
+export async function clearAllEvents(): Promise<void> {
+  memoryBuffer = [];
+  try {
+    const database = await getDB();
+    await database.clear(STORE_NAME);
+    console.info("All buffered events cleared");
+  } catch {
+    // Non-critical
   }
 }
 

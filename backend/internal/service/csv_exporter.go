@@ -13,26 +13,66 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/experiment-controller/backend/internal/model"
 	"github.com/experiment-controller/backend/internal/store"
 	"github.com/experiment-controller/backend/internal/wib"
 )
 
 type CSVExporter struct {
-	sessions     *store.SessionStore
-	events       *store.EventStore
-	participants *store.ParticipantStore
+	sessions     store.SessionStore
+	events       store.EventStore
+	participants store.ParticipantStore
 }
 
 func NewCSVExporter(
-	sessions *store.SessionStore,
-	events *store.EventStore,
-	participants *store.ParticipantStore,
+	sessions store.SessionStore,
+	events store.EventStore,
+	participants store.ParticipantStore,
 ) *CSVExporter {
 	return &CSVExporter{
 		sessions:     sessions,
 		events:       events,
 		participants: participants,
 	}
+}
+
+// formatOptionalTime formats an optional time pointer in WIB ISO format.
+// Returns an empty string if the time is nil.
+func formatOptionalTime(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return wib.FormatISO(*t)
+}
+
+// formatEventCSVRow converts an Event into a CSV-ready string slice.
+func formatEventCSVRow(ev model.Event, includeSessionID bool) []string {
+	clientMs := ""
+	if ev.ClientTimeMs != nil {
+		clientMs = fmt.Sprintf("%d", *ev.ClientTimeMs)
+	}
+	offsetMs := ""
+	if ev.ClientOffsetMs != nil {
+		offsetMs = fmt.Sprintf("%d", *ev.ClientOffsetMs)
+	}
+	payloadStr := "{}"
+	if ev.Payload != nil {
+		payloadStr = fmt.Sprintf("%v", ev.Payload)
+	}
+
+	row := []string{}
+	if includeSessionID {
+		row = append(row, ev.SessionID.String())
+	}
+	return append(row,
+		ev.ID.String(),
+		ev.EventType,
+		wib.Format(ev.ServerTime),
+		clientMs,
+		offsetMs,
+		ev.IdempotencyKey.String(),
+		payloadStr,
+	)
 }
 
 // ExportSessionEvents writes all events for a session as CSV.
@@ -52,28 +92,7 @@ func (e *CSVExporter) ExportSessionEvents(ctx context.Context, w io.Writer, sess
 	})
 
 	for _, ev := range events {
-		clientMs := ""
-		if ev.ClientTimeMs != nil {
-			clientMs = fmt.Sprintf("%d", *ev.ClientTimeMs)
-		}
-		offsetMs := ""
-		if ev.ClientOffsetMs != nil {
-			offsetMs = fmt.Sprintf("%d", *ev.ClientOffsetMs)
-		}
-		payloadStr := "{}"
-		if ev.Payload != nil {
-			payloadStr = fmt.Sprintf("%v", ev.Payload)
-		}
-
-		writer.Write([]string{
-			ev.ID.String(),
-			ev.EventType,
-			wib.Format(ev.ServerTime),
-			clientMs,
-			offsetMs,
-			ev.IdempotencyKey.String(),
-			payloadStr,
-		})
+		writer.Write(formatEventCSVRow(ev, false))
 	}
 
 	return writer.Error()
@@ -108,14 +127,8 @@ func (e *CSVExporter) ExportSessionSummary(ctx context.Context, w io.Writer, ses
 		"stress_start_wib", "stress_end_wib",
 	})
 
-	startedAt := ""
-	if sess.StartedAt != nil {
-		startedAt = wib.FormatISO(*sess.StartedAt)
-	}
-	completedAt := ""
-	if sess.CompletedAt != nil {
-		completedAt = wib.FormatISO(*sess.CompletedAt)
-	}
+	startedAt := formatOptionalTime(sess.StartedAt)
+	completedAt := formatOptionalTime(sess.CompletedAt)
 
 	writer.Write([]string{
 		sess.ID.String(),
@@ -148,22 +161,13 @@ func (e *CSVExporter) ExportAllSessions(ctx context.Context, w io.Writer) error 
 	})
 
 	for _, sess := range sessions {
-		startedAt := ""
-		if sess.StartedAt != nil {
-			startedAt = wib.FormatISO(*sess.StartedAt)
-		}
-		completedAt := ""
-		if sess.CompletedAt != nil {
-			completedAt = wib.FormatISO(*sess.CompletedAt)
-		}
-
 		writer.Write([]string{
 			sess.ID.String(),
 			sess.ParticipantID.String(),
 			string(sess.Status),
 			string(sess.CurrentPhase),
-			startedAt,
-			completedAt,
+			formatOptionalTime(sess.StartedAt),
+			formatOptionalTime(sess.CompletedAt),
 			wib.FormatISO(sess.CreatedAt),
 		})
 	}
@@ -187,29 +191,7 @@ func (e *CSVExporter) ExportAllEvents(ctx context.Context, w io.Writer) error {
 	})
 
 	for _, ev := range events {
-		clientMs := ""
-		if ev.ClientTimeMs != nil {
-			clientMs = fmt.Sprintf("%d", *ev.ClientTimeMs)
-		}
-		offsetMs := ""
-		if ev.ClientOffsetMs != nil {
-			offsetMs = fmt.Sprintf("%d", *ev.ClientOffsetMs)
-		}
-		payloadStr := "{}"
-		if ev.Payload != nil {
-			payloadStr = fmt.Sprintf("%v", ev.Payload)
-		}
-
-		writer.Write([]string{
-			ev.SessionID.String(),
-			ev.ID.String(),
-			ev.EventType,
-			wib.Format(ev.ServerTime),
-			clientMs,
-			offsetMs,
-			ev.IdempotencyKey.String(),
-			payloadStr,
-		})
+		writer.Write(formatEventCSVRow(ev, true))
 	}
 
 	return writer.Error()
@@ -236,22 +218,13 @@ func (e *CSVExporter) ExportParticipantSessions(ctx context.Context, w io.Writer
 	})
 
 	for _, sess := range sessions {
-		startedAt := ""
-		if sess.StartedAt != nil {
-			startedAt = wib.FormatISO(*sess.StartedAt)
-		}
-		completedAt := ""
-		if sess.CompletedAt != nil {
-			completedAt = wib.FormatISO(*sess.CompletedAt)
-		}
-
 		writer.Write([]string{
 			sess.ID.String(),
 			participant.Code,
 			string(sess.Status),
 			string(sess.CurrentPhase),
-			startedAt,
-			completedAt,
+			formatOptionalTime(sess.StartedAt),
+			formatOptionalTime(sess.CompletedAt),
 			wib.FormatISO(sess.CreatedAt),
 		})
 	}

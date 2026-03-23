@@ -1,5 +1,5 @@
 // ============================================================
-// Relaxation Phase — 5-minute box breathing protocol
+// Relaxation Phase — 5-minute box breathing protocol (i18n)
 // Pattern: Inhale → Hold → Exhale → Hold (configurable durations)
 // ============================================================
 
@@ -20,6 +20,7 @@ import { useEventLogger } from "@/hooks/useEventLogger";
 import { useDevControls } from "@/hooks/useDevControls";
 import { playTransitionBeep, stopAllAudio } from "@/lib/audio";
 import { DEFAULT_SESSION_CONFIG } from "@/lib/types";
+import { useT } from "@/i18n/provider";
 
 const RELAXATION_DURATION_MS = DEFAULT_SESSION_CONFIG.relaxation_duration_ms;
 const COUNTDOWN_DURATION_MS = 5_000;
@@ -28,6 +29,7 @@ export default function RelaxationPage() {
   const router = useRouter();
   const params = useParams();
   const sessionId = params.id as string;
+  const t = useT();
 
   const [phase, setPhase] = useState<"countdown" | "relaxation">("countdown");
   const hasStartedRef = useRef(false);
@@ -133,8 +135,8 @@ export default function RelaxationPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center gap-6"
           >
-            <h2 className="text-2xl font-bold text-white">Get Ready</h2>
-            <p className="text-slate-400">Box breathing begins in…</p>
+            <h2 className="text-2xl font-bold text-white">{t("relaxation.countdownTitle")}</h2>
+            <p className="text-slate-400">{t("relaxation.countdownSubtitle")}</p>
             <CountdownTimer
               remainingMs={countdownTimer.remainingMs}
               totalMs={COUNTDOWN_DURATION_MS}
@@ -150,7 +152,7 @@ export default function RelaxationPage() {
           >
             {/* Step label above circle */}
             <h2 className="text-xl font-semibold text-teal-300">
-              Box Breathing
+              {t("relaxation.boxBreathing")}
             </h2>
 
             {/* Animated breathing circle */}
@@ -165,14 +167,14 @@ export default function RelaxationPage() {
             <CountdownTimer
               remainingMs={globalTimer.remainingMs}
               totalMs={RELAXATION_DURATION_MS}
-              label="Time Remaining"
+              label={t("relaxation.timeRemaining")}
               size="md"
             />
 
             {/* Cycle counter + Mute toggle */}
             <div className="flex items-center justify-between w-full max-w-sm">
               <p className="text-sm text-slate-400">
-                Cycle {breathing.cycleNr} of ~{breathing.totalCycles}
+                {t("relaxation.cycle")} {breathing.cycleNr} {t("relaxation.ofCycles")} ~{breathing.totalCycles}
               </p>
 
               <button
@@ -183,19 +185,18 @@ export default function RelaxationPage() {
               >
                 {breathing.audioEnabled ? (
                   <>
-                    <span aria-hidden="true">🔊</span> Sound On
+                    <span aria-hidden="true">🔊</span> {t("relaxation.soundOn")}
                   </>
                 ) : (
                   <>
-                    <span aria-hidden="true">🔇</span> Muted
+                    <span aria-hidden="true">🔇</span> {t("relaxation.muted")}
                   </>
                 )}
               </button>
             </div>
 
             <p className="text-sm text-slate-500 max-w-md text-center">
-              Follow the breathing pattern. Inhale, hold, exhale, hold.
-              The next phase will begin automatically.
+              {t("relaxation.instruction")}
             </p>
 
             {/* Dev Controls: Skip button */}
@@ -205,7 +206,7 @@ export default function RelaxationPage() {
                 className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-300 bg-amber-900/30 border border-amber-700/40 hover:bg-amber-800/40 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                 id="skip-phase-btn"
               >
-                ⏩ Skip Phase (Dev)
+                {t("skip.button")}
               </button>
             )}
           </motion.div>
@@ -217,7 +218,7 @@ export default function RelaxationPage() {
         open={skipModalOpen}
         onConfirm={handleSkipConfirm}
         onCancel={handleSkipCancel}
-        phaseName="Relaxation"
+        phaseName={t("phases.relaxation")}
       />
     </div>
   );

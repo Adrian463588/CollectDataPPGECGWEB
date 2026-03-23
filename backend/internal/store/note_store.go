@@ -15,16 +15,16 @@ import (
 	"github.com/experiment-controller/backend/internal/wib"
 )
 
-type NoteStore struct {
+type noteStoreImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewNoteStore(db *pgxpool.Pool) *NoteStore {
-	return &NoteStore{db: db}
+func NewNoteStore(db *pgxpool.Pool) NoteStore {
+	return &noteStoreImpl{db: db}
 }
 
 // Create inserts a researcher note and returns the created note.
-func (s *NoteStore) Create(ctx context.Context, sessionID uuid.UUID, content string) (*model.ResearcherNote, error) {
+func (s *noteStoreImpl) Create(ctx context.Context, sessionID uuid.UUID, content string) (*model.ResearcherNote, error) {
 	id := uuid.New()
 	now := time.Now()
 	charLen := len([]rune(content))
@@ -47,7 +47,7 @@ func (s *NoteStore) Create(ctx context.Context, sessionID uuid.UUID, content str
 }
 
 // ListBySession returns all notes for a session (metadata only, no content).
-func (s *NoteStore) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]model.ResearcherNote, error) {
+func (s *noteStoreImpl) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]model.ResearcherNote, error) {
 	rows, err := s.db.Query(ctx,
 		`SELECT id, session_id, char_length, created_at
 		 FROM researcher_notes

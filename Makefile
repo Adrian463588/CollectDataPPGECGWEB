@@ -1,16 +1,15 @@
-.PHONY: dev dev-db dev-backend dev-frontend migrate test down clean
+.PHONY: dev dev-backend dev-frontend migrate db-reset test test-backend test-frontend build-backend build-frontend clean
 
-# ---- Development ----
+# ============================================================
+# Development
+# ============================================================
 
-dev: dev-db
-	@echo "Starting backend and frontend..."
+# Start backend and frontend concurrently (Windows).
+dev:
+	@echo "Starting backend..."
 	@start /B cmd /C "cd backend && go run ./cmd/server"
+	@echo "Starting frontend..."
 	@cd frontend && npm run dev
-
-dev-db:
-	docker compose up -d postgres
-	@echo "Waiting for PostgreSQL..."
-	@timeout /t 3 /nobreak >nul 2>&1 || sleep 3
 
 dev-backend:
 	cd backend && go run ./cmd/server
@@ -18,17 +17,25 @@ dev-backend:
 dev-frontend:
 	cd frontend && npm run dev
 
-# ---- Database ----
+# ============================================================
+# Database  (requires psql on PATH, targeting local PostgreSQL)
+# ============================================================
 
+# Apply all migrations to the existing database.
 migrate:
-	@echo "Running migrations..."
-	@docker exec -i expctrl-postgres psql -U expctrl -d expctrl < backend/migrations/000001_init_schema.up.sql
+	psql -U postgres -d expctrl -f backend/migrations/all.sql
 
-migrate-down:
-	@echo "Rolling back migrations..."
-	@docker exec -i expctrl-postgres psql -U expctrl -d expctrl < backend/migrations/000001_init_schema.down.sql
+# Drop, recreate, and migrate the database (full reset).
+db-reset:
+	psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'expctrl' AND pid <> pg_backend_pid();"
+	psql -U postgres -c "DROP DATABASE IF EXISTS expctrl;"
+	psql -U postgres -c "CREATE DATABASE expctrl;"
+	psql -U postgres -d expctrl -f backend/migrations/all.sql
+	@echo "Database reset complete."
 
-# ---- Testing ----
+# ============================================================
+# Testing
+# ============================================================
 
 test: test-backend test-frontend
 
@@ -38,20 +45,21 @@ test-backend:
 test-frontend:
 	cd frontend && npm test -- --watchAll=false
 
-# ---- Cleanup ----
+# ============================================================
+# Build
+# ============================================================
 
-down:
-	docker compose down
-
-clean:
-	docker compose down -v
-	cd frontend && rm -rf .next node_modules
-	cd backend && rm -f server
-
-# ---- Build ----
+build-backend:
+	cd backend && go build -o main.exe ./cmd/server
 
 build-frontend:
 	cd frontend && npm run build
 
-build-backend:
-	cd backend && GOOS=linux GOARCH=amd64 go build -o server ./cmd/server
+# ============================================================
+# Cleanup
+# ============================================================
+
+clean:
+	cd frontend && if exist .next rmdir /s /q .next
+	cd frontend && if exist node_modules rmdir /s /q node_modules
+	cd backend  && if exist main.exe del main.exe

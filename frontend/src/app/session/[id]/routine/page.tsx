@@ -1,5 +1,5 @@
 // ============================================================
-// Routine Page — Inter-phase gap for researcher notes
+// Routine Page — Inter-phase gap for researcher notes (i18n)
 // Researcher can record notes before stress induction begins.
 // ============================================================
 
@@ -16,6 +16,7 @@ import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useEventLogger } from "@/hooks/useEventLogger";
 import { useDevControls } from "@/hooks/useDevControls";
 import { playTransitionBeep } from "@/lib/audio";
+import { useT } from "@/i18n/provider";
 
 const MAX_NOTE_LENGTH = 2000;
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api";
@@ -24,6 +25,7 @@ export default function RoutinePage() {
   const router = useRouter();
   const params = useParams();
   const sessionId = params.id as string;
+  const t = useT();
 
   const [noteContent, setNoteContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -131,11 +133,11 @@ export default function RoutinePage() {
         >
           <Card>
             <h2 className="text-2xl font-bold text-white mb-2">
-              📝 Researcher Notes
+              📝 {t("routine.title")}
             </h2>
             <p className="text-sm text-slate-400 mb-6">
-              Record any observations before the stress phase begins.
-              Click <strong className="text-white">Continue</strong> when ready.
+              {t("routine.subtitle")}{" "}
+              <strong className="text-white">{t("routine.subtitleAction")}</strong>
             </p>
 
             {/* Notes textarea */}
@@ -147,7 +149,7 @@ export default function RoutinePage() {
                   setSaveStatus("idle");
                 }
               }}
-              placeholder="Enter researcher observations..."
+              placeholder={t("routine.placeholder")}
               className="w-full h-32 bg-slate-800/80 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 resize-none"
               id="routine-note-input"
             />
@@ -163,23 +165,23 @@ export default function RoutinePage() {
               id="save-note-btn"
             >
               {saveStatus === "saving"
-                ? "Saving…"
+                ? t("routine.saving")
                 : saveStatus === "saved"
-                  ? "✓ Saved — Add Another?"
+                  ? t("routine.saved")
                   : saveStatus === "error"
-                    ? "✗ Error — Retry"
-                    : "Save Note"}
+                    ? t("routine.saveError")
+                    : t("routine.saveNote")}
             </button>
 
             {/* Saved notes summary */}
             {savedNotes.length > 0 && (
               <div className="mt-4 space-y-1">
                 <p className="text-xs font-semibold text-slate-400">
-                  Saved Notes ({savedNotes.length}):
+                  {t("routine.savedNotes")} ({savedNotes.length}):
                 </p>
                 {savedNotes.map((note) => (
                   <p key={note.id} className="text-xs text-slate-500">
-                    • {note.charLength} chars — saved at {note.time} WIB
+                    • {note.charLength} {t("routine.noteInfo")} {note.time} WIB
                   </p>
                 ))}
               </div>
@@ -191,7 +193,7 @@ export default function RoutinePage() {
               className="w-full mt-6 py-3 px-6 rounded-xl font-bold text-lg text-white bg-indigo-600 hover:bg-indigo-500 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
               id="routine-continue-btn"
             >
-              Continue to Stress Phase →
+              {t("routine.continueBtn")}
             </button>
 
             {/* Dev Controls: Skip button */}
@@ -201,7 +203,7 @@ export default function RoutinePage() {
                 className="w-full mt-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-300 bg-amber-900/30 border border-amber-700/40 hover:bg-amber-800/40 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                 id="skip-phase-btn"
               >
-                ⏩ Skip Phase (Dev)
+                {t("skip.button")}
               </button>
             )}
           </Card>
@@ -212,7 +214,7 @@ export default function RoutinePage() {
         open={skipModalOpen}
         onConfirm={handleSkipConfirm}
         onCancel={handleSkipCancel}
-        phaseName="Routine"
+        phaseName={t("phases.routine")}
       />
     </div>
   );

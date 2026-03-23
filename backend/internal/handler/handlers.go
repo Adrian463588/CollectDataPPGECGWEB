@@ -5,6 +5,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -18,6 +19,9 @@ import (
 	"github.com/experiment-controller/backend/internal/store"
 	"github.com/experiment-controller/backend/internal/wib"
 )
+
+// Compile-time check: ensure store import is used.
+var _ = store.ErrSessionNotFound
 
 // ---- Helpers ----
 
@@ -64,10 +68,10 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 // ---- Participant Handler ----
 
 type ParticipantHandler struct {
-	store *store.ParticipantStore
+	store store.ParticipantStore
 }
 
-func NewParticipantHandler(s *store.ParticipantStore) *ParticipantHandler {
+func NewParticipantHandler(s store.ParticipantStore) *ParticipantHandler {
 	return &ParticipantHandler{store: s}
 }
 
@@ -105,10 +109,10 @@ func (h *ParticipantHandler) GetByCode(w http.ResponseWriter, r *http.Request) {
 
 type SessionHandler struct {
 	service      *service.SessionService
-	participants *store.ParticipantStore
+	participants store.ParticipantStore
 }
 
-func NewSessionHandler(svc *service.SessionService, ps *store.ParticipantStore) *SessionHandler {
+func NewSessionHandler(svc *service.SessionService, ps store.ParticipantStore) *SessionHandler {
 	return &SessionHandler{service: svc, participants: ps}
 }
 
@@ -217,8 +221,8 @@ func (h *SessionHandler) SubmitResponse(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// For now, store as an event — full response table support can be added
-	_, _, err := store.NewEventStore(nil).Create(r.Context(), id, model.BatchEventItem{
+	// Store response as an event via the injected service
+	_, _, err := h.service.LogEvent(r.Context(), id, model.BatchEventItem{
 		EventType:      "RESPONSE_SUBMITTED",
 		ClientTimeMs:   req.ClientTimeMs,
 		IdempotencyKey: req.IdempotencyKey,
@@ -271,17 +275,16 @@ func (h *SessionHandler) SkipPhase(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.service.SkipPhase(r.Context(), id, req.CurrentPhase, req.ClientTimeMs, req.IdempotencyKey)
 	if err != nil {
-		errMsg := err.Error()
 		switch {
-		case len(errMsg) > 14 && errMsg[:14] == "PHASE_MISMATCH":
-			writeError(w, r, http.StatusConflict, "PHASE_MISMATCH", errMsg)
-		case len(errMsg) > 17 && errMsg[:17] == "SESSION_COMPLETED":
-			writeError(w, r, http.StatusConflict, "SESSION_COMPLETED", errMsg)
-		case errMsg == "session not found":
+		case errors.Is(err, service.ErrPhaseMismatch):
+			writeError(w, r, http.StatusConflict, "PHASE_MISMATCH", err.Error())
+		case errors.Is(err, service.ErrSessionCompleted):
+			writeError(w, r, http.StatusConflict, "SESSION_COMPLETED", err.Error())
+		case errors.Is(err, service.ErrSessionNotFound):
 			writeError(w, r, http.StatusNotFound, "NOT_FOUND", "Session not found")
 		default:
 			slog.Error("skip phase failed", "error", err)
-			writeError(w, r, http.StatusBadRequest, "SKIP_ERROR", errMsg)
+			writeError(w, r, http.StatusBadRequest, "SKIP_ERROR", err.Error())
 		}
 		return
 	}
@@ -292,10 +295,10 @@ func (h *SessionHandler) SkipPhase(w http.ResponseWriter, r *http.Request) {
 // ---- Event Handler ----
 
 type EventHandler struct {
-	store *store.EventStore
+	store store.EventStore
 }
 
-func NewEventHandler(s *store.EventStore) *EventHandler {
+func NewEventHandler(s store.EventStore) *EventHandler {
 	return &EventHandler{store: s}
 }
 
@@ -313,6 +316,10 @@ func (h *EventHandler) BatchCreate(w http.ResponseWriter, r *http.Request) {
 
 	accepted, duplicates, err := h.store.BatchCreate(r.Context(), id, req.Events)
 	if err != nil {
+		if errors.Is(err, store.ErrSessionNotFound) {
+			writeError(w, r, http.StatusNotFound, "SESSION_NOT_FOUND", "Session not found — stale events discarded")
+			return
+		}
 		slog.Error("batch create events failed", "error", err)
 		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to create events")
 		return
@@ -405,11 +412,11 @@ func (h *ExportHandler) PhaseTimelinePreview(w http.ResponseWriter, r *http.Requ
 // ---- Admin Handler ----
 
 type AdminHandler struct {
-	sessions *store.SessionStore
+	sessions store.SessionStore
 	adminKey string
 }
 
-func NewAdminHandler(s *store.SessionStore, adminKey string) *AdminHandler {
+func NewAdminHandler(s store.SessionStore, adminKey string) *AdminHandler {
 	return &AdminHandler{sessions: s, adminKey: adminKey}
 }
 
@@ -453,10 +460,10 @@ func (h *AdminHandler) ResumeSession(w http.ResponseWriter, r *http.Request) {
 // ---- Note Handler ----
 
 type NoteHandler struct {
-	notes *store.NoteStore
+	notes store.NoteStore
 }
 
-func NewNoteHandler(notes *store.NoteStore) *NoteHandler {
+func NewNoteHandler(notes store.NoteStore) *NoteHandler {
 	return &NoteHandler{notes: notes}
 }
 

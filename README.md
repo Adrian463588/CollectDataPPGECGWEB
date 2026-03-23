@@ -4,64 +4,58 @@ Experiment orchestration system for an early stress detection study. Manages exp
 
 ## Architecture
 
-| Component | Stack | Deploy |
+| Component | Stack | Details |
 |---|---|---|
-| Frontend | Next.js + TypeScript + Tailwind + Framer Motion | Tencent EdgeOne |
-| Backend | Go + PostgreSQL | Azure / Heroku |
-| Database | PostgreSQL 16 | Managed (Azure/Heroku) |
+| Frontend | Next.js (App Router) + TypeScript + Tailwind + Framer Motion | Runs locally on port 3000. Uses an `/api-proxy` to solve CORS. |
+| Backend | Go + `chi` router + `pgx` | Runs locally on port 8081. |
+| Database | PostgreSQL 16 | Runs locally on port 5432 (native installation, NO DOCKER). |
 
-## Quick Start
+**Note**: All Docker functionality has been completely removed to provide a simplified, native local development workflow for Windows.
+
+## Quick Start (Local Setup)
 
 ### Prerequisites
 
 - Node.js ≥ 18
 - Go ≥ 1.21
-- Docker + Docker Compose
+- PostgreSQL (natively installed, running on `localhost:5432`)
+- `make` utility installed on your Windows path.
 
-### 1. Start Database
+### 1. Database Setup & Reset
 
-```bash
-docker compose up -d postgres
-```
-
-### 2. Start Backend
+Ensure your local PostgreSQL is running and you can authenticate natively as user `postgres`. To drop the existing database, completely recreate it, and apply all migrations, run:
 
 ```bash
-cd backend
-cp .env.example .env
-go run ./cmd/server
+make db-reset
 ```
 
-### 3. Start Frontend
+*(This executes the combined schema script at `backend/migrations/all.sql` directly using `psql`)*
 
-```bash
-cd frontend
-cp .env.example .env.local
-npm install
-npm run dev
-```
+### 2. Start Both Services
 
-Open [http://localhost:3000](http://localhost:3000)
-
-### One-Command Dev
+To launch both the Go backend and Next.js frontend concurrently via `make`:
 
 ```bash
 make dev
 ```
+- The backend will start on `http://localhost:8081`
+- The frontend will start on `http://localhost:3000`
 
-### Run Migrations
+Open [http://localhost:3000](http://localhost:3000) or [http://192.168.56.1:3000](http://192.168.56.1:3000) (if testing over LAN).
 
-Migrations are auto-applied via `docker-entrypoint-initdb.d`. For manual runs:
+## Makefile Commands Reference
 
-```bash
-make migrate
-```
-
-### Run Tests
-
-```bash
-make test
-```
+| Command | Action |
+|---|---|
+| `make dev` | Starts both backend and frontend concurrently |
+| `make dev-backend` | Starts only the Go backend |
+| `make dev-frontend` | Starts only the Next.js frontend |
+| `make db-reset` | Terminates active connections, drops, recreates, and migrates the local DB |
+| `make migrate` | Applies `all.sql` to the existing local DB |
+| `make test` | Runs both backend and frontend unit tests |
+| `make build-backend`| Builds the Go server into an executable `main.exe` |
+| `make build-frontend`| Packages the Next.js application |
+| `make clean` | Removes `node_modules`, `.next` folder, and `main.exe` |
 
 ## Experiment Flow
 
@@ -84,7 +78,7 @@ Consent → Device Check → Countdown (5s) → Relaxation (5min) → Stress / M
 | `GET` | `/api/admin/export/sessions/:id/events.csv` | Export events CSV |
 | `GET` | `/api/admin/export/all/sessions.csv` | Bulk export CSV |
 
-Admin endpoints require `X-Admin-Key` header.
+Admin endpoints require the `X-Admin-Key` header.
 
 ## Environment Variables
 
@@ -92,43 +86,18 @@ Admin endpoints require `X-Admin-Key` header.
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | `8080` | Server port |
-| `DATABASE_URL` | `postgres://...` | PostgreSQL connection |
-| `ADMIN_API_KEY` | — | Admin auth key |
-| `CORS_ORIGINS` | `http://localhost:3000` | Allowed origins |
+| `PORT` | `8081` | Server port |
+| `DATABASE_URL` | `postgres://postgres:postgres@localhost:5432/expctrl?sslmode=disable` | PostgreSQL connection |
+| `ADMIN_API_KEY` | `test123` | Admin auth key |
+| `CORS_ORIGINS` | `http://localhost:3000,http://192.168.56.1:3000` | Allowed origins |
 | `TZ` | `Asia/Jakarta` | Timezone |
 
 ### Frontend (`frontend/.env.local`)
 
 | Variable | Description |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | Backend API URL |
-| `NEXT_PUBLIC_APP_NAME` | App display name |
-
-## Deployment
-
-### Frontend → Tencent EdgeOne
-
-```bash
-cd frontend && npm run build
-# Upload .next/ output to EdgeOne
-```
-
-### Backend → Azure
-
-```bash
-cd backend
-GOOS=linux GOARCH=amd64 go build -o server ./cmd/server
-az webapp up --name experiment-controller-api
-```
-
-### Backend → Heroku
-
-```bash
-heroku create experiment-controller-api
-heroku addons:create heroku-postgresql:essential-0
-git subtree push --prefix backend heroku main
-```
+| `NEXT_PUBLIC_API_URL` | Backend API URL (Proxied to `/api-proxy`) |
+| `BACKEND_URL` | Server-side Backend location (`http://localhost:8081`) |
 
 ## License
 

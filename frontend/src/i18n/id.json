@@ -28,10 +28,10 @@
   "consent": {
     "title": "Selamat Datang di Studi",
     "p1": "Terima kasih telah berpartisipasi dalam studi penelitian deteksi stres dini ini. Selama sesi ini, Anda akan menyelesaikan fase relaksasi 5 menit diikuti oleh tugas aritmatika mental 5 menit.",
-    "p2": "Sinyal fisiologis Anda akan direkam oleh perangkat wearable yang Anda kenakan (Samsung Galaxy Watch dan Polar H10). Aplikasi web ini hanya mengelola timeline eksperimen \u2014 tidak mengakses data perangkat Anda secara langsung.",
+    "p2": "Sinyal fisiologis Anda akan direkam oleh perangkat wearable yang Anda kenakan (Samsung Galaxy Watch dan Polar H10). Aplikasi web ini hanya mengelola timeline eksperimen — tidak mengakses data perangkat Anda secara langsung.",
     "p3": "Semua data yang dikumpulkan bersifat pseudonim. Tidak ada informasi pengenal pribadi yang disimpan.",
     "agree": "Saya telah membaca dan memahami informasi studi di atas. Saya setuju untuk berpartisipasi dalam sesi ini.",
-    "continueBtn": "Saya Setuju \u2014 Lanjutkan"
+    "continueBtn": "Saya Setuju — Lanjutkan"
   },
   "session": {
     "newSession": "Sesi Baru",
@@ -69,17 +69,27 @@
     "hold": "Tahan",
     "breatheOut": "Hembuskan",
     "countdownTitle": "Bersiap",
-    "countdownSubtitle": "Fase relaksasi akan segera dimulai…"
+    "countdownSubtitle": "Pernapasan kotak dimulai dalam…",
+    "boxBreathing": "Pernapasan Kotak",
+    "timeRemaining": "Waktu Tersisa",
+    "cycle": "Siklus",
+    "ofCycles": "dari",
+    "soundOn": "Suara Aktif",
+    "muted": "Senyap",
+    "instruction": "Ikuti pola pernapasan. Tarik napas, tahan, hembuskan, tahan. Fase berikutnya akan dimulai secara otomatis."
   },
   "routine": {
-    "title": "Catatan Peneliti",
-    "subtitle": "Catat observasi sebelum fase stres dimulai. Klik <strong>Lanjutkan</strong> jika sudah siap.",
+    "title": "Fase Rutinitas",
+    "subtitle": "Istirahatlah sejenak. Catat observasi sebelum fase tugas dimulai.",
+    "subtitleAction": "Klik Lanjutkan jika sudah siap.",
     "placeholder": "Masukkan observasi peneliti...",
     "saveNote": "Simpan Catatan",
     "saving": "Menyimpan…",
     "saved": "✓ Tersimpan — Tambah Lagi?",
+    "saveError": "✗ Kesalahan — Coba Lagi",
     "savedNotes": "Catatan Tersimpan",
-    "continueBtn": "Lanjut ke Fase Stres →"
+    "noteInfo": "karakter — disimpan pukul",
+    "continueBtn": "Lanjut ke Fase Tugas →"
   },
   "stress": {
     "title": "Aritmatika Mental",
