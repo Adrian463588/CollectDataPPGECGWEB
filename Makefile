@@ -1,4 +1,4 @@
-.PHONY: dev dev-backend dev-frontend migrate db-reset test test-backend test-frontend build-backend build-frontend clean
+.PHONY: dev dev-backend dev-frontend migrate db-reset test test-backend test-frontend test-e2e test-e2e-open build-backend build-frontend clean
 
 # ============================================================
 # Development
@@ -44,6 +44,12 @@ test-backend:
 
 test-frontend:
 	cd frontend && npm test -- --watchAll=false
+
+test-e2e:
+	cd frontend && npx cypress run
+
+test-e2e-open:
+	cd frontend && npx cypress open
 
 # ============================================================
 # Build

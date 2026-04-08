@@ -1,0 +1,63 @@
+{
+  "participantCodes": ["CY-TEST-001", "CY-TEST-002", "CY-TEST-003"],
+  "adminKey": "test123",
+  "invalidAdminKey": "wrong-key-123",
+  "sessionConfig": {
+    "relaxation_duration_ms": 300000,
+    "stress_duration_ms": 300000,
+    "question_timeout_ms": 8000,
+    "difficulty": "MEDIUM",
+    "audio_enabled": true,
+    "score_visible": true,
+    "breathing_config": {
+      "inhale_ms": 4000,
+      "hold_after_inhale_ms": 4000,
+      "exhale_ms": 4000,
+      "hold_after_exhale_ms": 4000
+    }
+  },
+  "mockSession": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "participant_id": "00000000-0000-0000-0000-000000000010",
+    "status": "RUNNING",
+    "current_phase": "INTRO",
+    "stimuli_count": 0,
+    "created_at": "2026-01-01T00:00:00+07:00"
+  },
+  "mockSessionState": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "status": "COMPLETED",
+    "current_phase": "COMPLETE",
+    "phase_started_at_wib": "2026-01-01T00:10:00+07:00",
+    "phase_ends_at_wib": "2026-01-01T00:10:00+07:00",
+    "elapsed_ms": 600000
+  },
+  "mockExportPreview": {
+    "participants": ["CY-TEST-001"],
+    "data": {
+      "CY-TEST-001": [
+        {
+          "participant_code": "CY-TEST-001",
+          "phase": "Relax",
+          "start_timestamp": "2026-01-01T00:00:00+07:00",
+          "end_timestamp": "2026-01-01T00:05:00+07:00",
+          "date": "2026-01-01"
+        },
+        {
+          "participant_code": "CY-TEST-001",
+          "phase": "Stress",
+          "start_timestamp": "2026-01-01T00:05:00+07:00",
+          "end_timestamp": "2026-01-01T00:10:00+07:00",
+          "date": "2026-01-01"
+        }
+      ]
+    },
+    "scores": {
+      "CY-TEST-001": {
+        "correct": 5,
+        "incorrect": 3,
+        "total_questions": 8
+      }
+    }
+  }
+}

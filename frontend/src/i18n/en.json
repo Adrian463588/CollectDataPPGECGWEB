@@ -137,14 +137,17 @@
     "downloaded": "✓ Downloaded — Download Again?",
     "downloadError": "✗ Error — Retry",
     "lastExport": "Last export",
-    "csvNote": "CSV: participant_code, phase (Relax / Routine / Task), start_timestamp, end_timestamp (ISO 8601 WIB), date (dd/MM/yyyy).",
+    "csvNote": "CSV: participant_code, phase, start/end timestamps (ISO 8601 WIB), date, correct, incorrect, total_questions.",
     "dataNote": "All data is pseudonymous — no PII is exported.",
     "columns": {
       "code": "Code",
       "phase": "Phase",
       "startTime": "Start Time",
       "endTime": "End Time",
-      "date": "Date"
+      "date": "Date",
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "totalQuestions": "Total Q"
     },
     "noPhaseData": "No phase data for this participant."
   }

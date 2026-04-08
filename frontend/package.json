@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "jest --config jest.config.ts"
+    "test": "jest --config jest.config.ts",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:headed": "cypress run --headed"
   },
   "dependencies": {
     "framer-motion": "^12.34.3",
@@ -27,6 +30,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "cypress": "^15.12.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jest": "^30.2.0",

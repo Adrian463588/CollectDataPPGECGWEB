@@ -17,7 +17,7 @@ import { useT } from "@/i18n/provider";
 
 type ExportStatus = "idle" | "loading" | "success" | "error";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:8081";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api-proxy";
 
 interface PhaseRow {
   participant_code: string;
@@ -27,9 +27,16 @@ interface PhaseRow {
   date: string;
 }
 
+interface ParticipantScore {
+  correct: number;
+  incorrect: number;
+  total_questions: number;
+}
+
 interface PreviewData {
   participants: string[];
   data: Record<string, PhaseRow[]>;
+  scores: Record<string, ParticipantScore>;
 }
 
 function formatWIBFilename(): string {
@@ -84,7 +91,7 @@ function ExportContent() {
     if (!adminKey.trim()) return;
     setAuthError("");
     try {
-      const res = await fetch(`${API_BASE}/api/admin/sessions`, {
+      const res = await fetch(`${API_BASE}/admin/sessions`, {
         headers: { "X-Admin-Key": adminKey.trim() },
       });
       if (res.ok) {
@@ -102,7 +109,7 @@ function ExportContent() {
     if (!authenticated) return;
     setPreviewLoading(true);
     setPreviewError("");
-    fetch(`${API_BASE}/api/admin/export/preview`, {
+    fetch(`${API_BASE}/admin/export/preview`, {
       headers: { "X-Admin-Key": adminKey.trim() },
     })
       .then((res) => {
@@ -130,7 +137,7 @@ function ExportContent() {
     setDownloadStatus("loading");
     if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/export/participants.csv`, {
+      const res = await fetch(`${API_BASE}/admin/export/participants.csv`, {
         headers: { "X-Admin-Key": adminKey.trim() },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -285,6 +292,15 @@ function ExportContent() {
                           <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                             {t("export.columns.date")}
                           </th>
+                          <th className="px-3 py-2.5 text-right text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+                            {t("export.columns.correct")}
+                          </th>
+                          <th className="px-3 py-2.5 text-right text-xs font-semibold text-red-400 uppercase tracking-wider">
+                            {t("export.columns.incorrect")}
+                          </th>
+                          <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            {t("export.columns.totalQuestions")}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -319,11 +335,27 @@ function ExportContent() {
                               <td className="px-3 py-2.5 text-slate-300 font-mono text-xs">
                                 {row.date}
                               </td>
+                              {i === 0 && (() => {
+                                const score = preview?.scores?.[currentCode];
+                                return (
+                                  <>
+                                    <td className="px-3 py-2.5 text-right text-emerald-300 font-mono text-xs font-bold" rowSpan={currentRows.length}>
+                                      {score?.correct ?? 0}
+                                    </td>
+                                    <td className="px-3 py-2.5 text-right text-red-300 font-mono text-xs font-bold" rowSpan={currentRows.length}>
+                                      {score?.incorrect ?? 0}
+                                    </td>
+                                    <td className="px-3 py-2.5 text-right text-slate-300 font-mono text-xs font-bold" rowSpan={currentRows.length}>
+                                      {score?.total_questions ?? 0}
+                                    </td>
+                                  </>
+                                );
+                              })()}
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5} className="px-3 py-6 text-center text-slate-500 text-sm">
+                            <td colSpan={8} className="px-3 py-6 text-center text-slate-500 text-sm">
                               {t("export.noPhaseData")}
                             </td>
                           </tr>

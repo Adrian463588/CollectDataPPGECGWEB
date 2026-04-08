@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -247,6 +248,13 @@ const wibTimestampFormat = "2006-01-02T15:04:05.000+07:00"
 // wibDateFormat is dd/MM/yyyy in Go layout.
 const wibDateFormat = "02/01/2006"
 
+// ParticipantScore holds aggregated quiz scores per participant.
+type ParticipantScore struct {
+	Correct        int `json:"correct"`
+	Incorrect      int `json:"incorrect"`
+	TotalQuestions int `json:"total_questions"`
+}
+
 // PhaseTimelineRow is a single row in the phase timeline export.
 type PhaseTimelineRow struct {
 	ParticipantCode string `json:"participant_code"`
@@ -260,6 +268,7 @@ type PhaseTimelineRow struct {
 type PhaseTimelinePreview struct {
 	Participants []string                      `json:"participants"`
 	Data         map[string][]PhaseTimelineRow `json:"data"`
+	Scores       map[string]ParticipantScore   `json:"scores"`
 }
 
 // getPhaseTimelineRows queries phase transitions and returns sorted rows.
@@ -339,25 +348,80 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 	return result, rows.Err()
 }
 
-// ExportPhaseTimeline writes the 5-column CSV.
+// getParticipantScores queries RESPONSE_SUBMITTED events joined with stimuli
+// to compute correct, incorrect, and total question counts per participant.
+func (e *CSVExporter) getParticipantScores(ctx context.Context) (map[string]ParticipantScore, error) {
+	query := `
+		SELECT
+			p.code AS participant_code,
+			COUNT(*) AS total_questions,
+			COUNT(CASE WHEN (ev.payload->>'participant_answer')::int = st.correct_answer THEN 1 END) AS correct
+		FROM events ev
+		JOIN sessions s ON s.id = ev.session_id
+		JOIN participants p ON p.id = s.participant_id
+		LEFT JOIN stimuli st ON st.id = (ev.payload->>'stimulus_id')::uuid
+			AND st.session_id = ev.session_id
+		WHERE ev.event_type = 'RESPONSE_SUBMITTED'
+		GROUP BY p.code
+		ORDER BY p.code
+	`
+
+	rows, err := e.sessions.DB().Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("query participant scores: %w", err)
+	}
+	defer rows.Close()
+
+	scores := make(map[string]ParticipantScore)
+	for rows.Next() {
+		var code string
+		var total, correct int
+		if err := rows.Scan(&code, &total, &correct); err != nil {
+			return nil, fmt.Errorf("scan participant score row: %w", err)
+		}
+		scores[code] = ParticipantScore{
+			Correct:        correct,
+			Incorrect:      total - correct,
+			TotalQuestions: total,
+		}
+	}
+
+	return scores, rows.Err()
+}
+
+// ExportPhaseTimeline writes the 8-column CSV (phase timeline + scores).
 func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) error {
 	rows, err := e.getPhaseTimelineRows(ctx)
 	if err != nil {
 		return err
 	}
 
+	scores, err := e.getParticipantScores(ctx)
+	if err != nil {
+		slog.Warn("failed to load participant scores for CSV", "error", err)
+		// Continue without scores — degrade gracefully
+		scores = make(map[string]ParticipantScore)
+	}
+
 	writer := csv.NewWriter(w)
 	defer writer.Flush()
 
-	writer.Write([]string{"participant_code", "phase", "start_timestamp", "end_timestamp", "date"})
+	writer.Write([]string{
+		"participant_code", "phase", "start_timestamp", "end_timestamp", "date",
+		"correct", "incorrect", "total_questions",
+	})
 
 	for _, row := range rows {
+		score := scores[row.ParticipantCode]
 		writer.Write([]string{
 			row.ParticipantCode,
 			row.Phase,
 			row.StartTimestamp,
 			row.EndTimestamp,
 			row.Date,
+			strconv.Itoa(score.Correct),
+			strconv.Itoa(score.Incorrect),
+			strconv.Itoa(score.TotalQuestions),
 		})
 	}
 
@@ -371,9 +435,16 @@ func (e *CSVExporter) GetPhaseTimelinePreview(ctx context.Context) (*PhaseTimeli
 		return nil, err
 	}
 
+	scores, err := e.getParticipantScores(ctx)
+	if err != nil {
+		slog.Warn("failed to load participant scores for preview", "error", err)
+		scores = make(map[string]ParticipantScore)
+	}
+
 	preview := &PhaseTimelinePreview{
 		Participants: []string{},
 		Data:         make(map[string][]PhaseTimelineRow),
+		Scores:       scores,
 	}
 
 	seen := make(map[string]bool)
