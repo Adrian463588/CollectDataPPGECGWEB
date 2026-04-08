@@ -137,14 +137,17 @@
     "downloaded": "✓ Terunduh — Unduh Lagi?",
     "downloadError": "✗ Kesalahan — Coba Lagi",
     "lastExport": "Ekspor terakhir",
-    "csvNote": "CSV: kode_partisipan, fase (Relax / Routine / Task), start_timestamp, end_timestamp (ISO 8601 WIB), tanggal (dd/MM/yyyy).",
+    "csvNote": "CSV: kode_partisipan, fase, start/end timestamps (ISO 8601 WIB), tanggal, benar, salah, total_pertanyaan.",
     "dataNote": "Semua data bersifat pseudonim — tidak ada PII yang diekspor.",
     "columns": {
       "code": "Kode",
       "phase": "Fase",
       "startTime": "Waktu Mulai",
       "endTime": "Waktu Selesai",
-      "date": "Tanggal"
+      "date": "Tanggal",
+      "correct": "Benar",
+      "incorrect": "Salah",
+      "totalQuestions": "Total Q"
     },
     "noPhaseData": "Tidak ada data fase untuk partisipan ini."
   }
