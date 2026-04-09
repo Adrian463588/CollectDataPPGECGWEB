@@ -8,7 +8,7 @@ out/
 dist/
 build/
 *.exe
-server
+/server
 
 # Environment
 .env
