@@ -64,3 +64,33 @@ func (s *participantStoreImpl) GetByID(ctx context.Context, id uuid.UUID) (*mode
 	}
 	return &p, nil
 }
+
+// DeleteByCode removes all data for a participant in cascade order:
+// responses → stimuli → events → researcher_notes → sessions → participant.
+// This is intended for researcher use when a data collection run is invalid.
+func (s *participantStoreImpl) DeleteByCode(ctx context.Context, code string) error {
+	_, err := s.db.Exec(ctx, `
+		DO $$
+		DECLARE
+			pid UUID;
+		BEGIN
+			SELECT id INTO pid FROM participants WHERE code = $1;
+			IF pid IS NULL THEN
+				RAISE EXCEPTION 'participant not found';
+			END IF;
+
+			-- Delete child rows in FK order
+			DELETE FROM responses     WHERE session_id IN (SELECT id FROM sessions WHERE participant_id = pid);
+			DELETE FROM stimuli       WHERE session_id IN (SELECT id FROM sessions WHERE participant_id = pid);
+			DELETE FROM events        WHERE session_id IN (SELECT id FROM sessions WHERE participant_id = pid);
+			DELETE FROM researcher_notes WHERE session_id IN (SELECT id FROM sessions WHERE participant_id = pid);
+			DELETE FROM sessions      WHERE participant_id = pid;
+			DELETE FROM participants  WHERE id = pid;
+		END $$;
+	`, code)
+	if err != nil {
+		return fmt.Errorf("delete participant %q: %w", code, err)
+	}
+	return nil
+}
+

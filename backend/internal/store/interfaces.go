@@ -25,7 +25,9 @@ type ParticipantStore interface {
 	Create(ctx context.Context, req model.CreateParticipantRequest) (*model.Participant, error)
 	GetByCode(ctx context.Context, code string) (*model.Participant, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Participant, error)
+	DeleteByCode(ctx context.Context, code string) error
 }
+
 
 type EventStore interface {
 	Create(ctx context.Context, sessionID uuid.UUID, item model.BatchEventItem) (*model.Event, bool, error)

@@ -59,7 +59,7 @@ func (s *Server) Router() *chi.Mux {
 	sessionH := handler.NewSessionHandler(sessionSvc, participantStore)
 	eventH := handler.NewEventHandler(eventStore)
 	exportH := handler.NewExportHandler(csvExporter)
-	adminH := handler.NewAdminHandler(sessionStore, s.cfg.AdminAPIKey)
+	adminH := handler.NewAdminHandler(sessionStore, participantStore, s.cfg.AdminAPIKey)
 	noteH := handler.NewNoteHandler(noteStore)
 
 	// ---- Routes ----
@@ -94,6 +94,9 @@ func (s *Server) Router() *chi.Mux {
 			r.Get("/sessions", adminH.ListSessions)
 			r.Post("/sessions/{id}/pause", adminH.PauseSession)
 			r.Post("/sessions/{id}/resume", adminH.ResumeSession)
+
+			// Participant management
+			r.Delete("/participants/{code}", adminH.DeleteParticipant)
 
 			// Export
 			r.Get("/export/sessions/{id}/events.csv", exportH.SessionEvents)

@@ -66,6 +66,12 @@ function ExportContent() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
 
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
+  const [deleteStatus, setDeleteStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [deleteError, setDeleteError] = useState("");
+
   // Download reset timer
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -131,6 +137,51 @@ function ExportContent() {
       if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     };
   }, []);
+
+  // Delete participant handler
+  const handleDeleteClick = useCallback((code: string) => {
+    setDeleteTarget(code);
+    setDeleteConfirmInput("");
+    setDeleteStatus("idle");
+    setDeleteError("");
+  }, []);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteTarget(null);
+    setDeleteConfirmInput("");
+    setDeleteStatus("idle");
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget || deleteConfirmInput !== deleteTarget) return;
+    setDeleteStatus("loading");
+    setDeleteError("");
+    try {
+      const res = await fetch(`${API_BASE}/admin/participants/${encodeURIComponent(deleteTarget)}`, {
+        method: "DELETE",
+        headers: { "X-Admin-Key": adminKey.trim() },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setDeleteTarget(null);
+      // Reload preview
+      setPreviewLoading(true);
+      const previewRes = await fetch(`${API_BASE}/admin/export/preview`, {
+        headers: { "X-Admin-Key": adminKey.trim() },
+      });
+      if (previewRes.ok) {
+        const data: PreviewData = await previewRes.json();
+        setPreview(data);
+        // Navigate to first participant if deleted was current
+        router.replace("/export");
+      }
+    } catch {
+      setDeleteStatus("error");
+      setDeleteError(t("export.deleteError"));
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, [deleteTarget, deleteConfirmInput, adminKey, t, router]);
+
 
   // Download CSV
   const handleDownload = useCallback(async () => {
@@ -260,16 +311,28 @@ function ExportContent() {
                       </p>
                     </div>
 
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={goToNext}
-                      disabled={isLast}
-                      id="next-participant-btn"
-                      aria-label="Next participant"
-                    >
-                      {t("common.next")}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {/* Delete participant button */}
+                      <button
+                        onClick={() => handleDeleteClick(currentCode)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400/80 bg-rose-950/20 border border-rose-800/30 hover:bg-rose-900/40 hover:text-rose-300 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-700/40"
+                        id="delete-participant-btn"
+                        title="Delete participant and all their data"
+                      >
+                        🗑 {t("export.deleteParticipant")}
+                      </button>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={goToNext}
+                        disabled={isLast}
+                        id="next-participant-btn"
+                        aria-label="Next participant"
+                      >
+                        {t("common.next")}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Preview Table */}
@@ -405,6 +468,61 @@ function ExportContent() {
           )}
         </motion.div>
       </main>
+
+      {/* Delete Participant Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-slate-900 border border-rose-800/40 rounded-2xl p-6 shadow-2xl"
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-2xl">🗑</span>
+              <div>
+                <h3 className="text-lg font-bold text-rose-300">{t("export.deleteTitle")}</h3>
+                <p className="text-sm text-slate-400 mt-1">
+                  {t("export.deleteWarning").replace("{code}", deleteTarget)}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-2">
+              {t("export.deleteConfirmLabel").replace("{code}", deleteTarget)}
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmInput}
+              onChange={(e) => setDeleteConfirmInput(e.target.value)}
+              placeholder={deleteTarget}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-mono text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-600/50 mb-4"
+              id="delete-confirm-input"
+              autoFocus
+            />
+
+            {deleteError && (
+              <p className="text-sm text-rose-400 mb-3" role="alert">{deleteError}</p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteConfirmInput !== deleteTarget || deleteStatus === "loading"}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-rose-700 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                id="delete-confirm-btn"
+              >
+                {deleteStatus === "loading" ? "Deleting…" : t("export.deleteConfirmBtn")}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
