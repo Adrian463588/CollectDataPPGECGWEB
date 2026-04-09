@@ -444,11 +444,13 @@ func (h *AdminHandler) DeleteParticipant(w http.ResponseWriter, r *http.Request)
 
 	if err := h.participants.DeleteByCode(r.Context(), code); err != nil {
 		slog.Error("delete participant failed", "code", code, "error", err)
-		if strings.Contains(err.Error(), "participant not found") {
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "participant not found") ||
+			strings.Contains(errMsg, "no rows in result set") {
 			writeError(w, r, http.StatusNotFound, "NOT_FOUND", "Participant not found: "+code)
 			return
 		}
-		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to delete participant")
+		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to delete participant: "+errMsg)
 		return
 	}
 
@@ -458,6 +460,7 @@ func (h *AdminHandler) DeleteParticipant(w http.ResponseWriter, r *http.Request)
 		"message": "Participant " + code + " and all associated data have been deleted",
 	})
 }
+
 
 
 
