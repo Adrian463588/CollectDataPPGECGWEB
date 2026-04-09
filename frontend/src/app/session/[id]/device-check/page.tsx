@@ -37,6 +37,12 @@ export default function DeviceCheckPage() {
       description: t("deviceCheck.polarH10Desc"),
       icon: "💓",
     },
+    {
+      id: "colmi-ring",
+      name: t("deviceCheck.colmiRing"),
+      description: t("deviceCheck.colmiRingDesc"),
+      icon: "💍",
+    },
   ];
 
   const allChecked = devices.every((d) => checked[d.id]);

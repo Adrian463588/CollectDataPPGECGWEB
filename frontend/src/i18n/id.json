@@ -21,14 +21,14 @@
   "home": {
     "title": "Pengontrol Eksperimen",
     "subtitle": "Studi Deteksi Stres",
-    "description": "Orkestrator eksperimen interaktif untuk penelitian deteksi stres dini menggunakan Samsung Galaxy Watch (PPG) + Polar H10 (ECG).",
+    "description": "Orkestrator eksperimen interaktif untuk penelitian deteksi stres dini menggunakan Samsung Galaxy Watch (PPG) + Polar H10 (ECG) + Colmi Ring (smart ring PPG).",
     "startButton": "Mulai Sesi Baru",
     "exportButton": "Ekspor Data"
   },
   "consent": {
     "title": "Selamat Datang di Studi",
     "p1": "Terima kasih telah berpartisipasi dalam studi penelitian deteksi stres dini ini. Selama sesi ini, Anda akan menyelesaikan fase relaksasi 5 menit diikuti oleh tugas aritmatika mental 5 menit.",
-    "p2": "Sinyal fisiologis Anda akan direkam oleh perangkat wearable yang Anda kenakan (Samsung Galaxy Watch dan Polar H10). Aplikasi web ini hanya mengelola timeline eksperimen — tidak mengakses data perangkat Anda secara langsung.",
+    "p2": "Sinyal fisiologis Anda akan direkam oleh perangkat wearable yang Anda kenakan (Samsung Galaxy Watch, Polar H10, dan Colmi Ring smart ring). Aplikasi web ini hanya mengelola timeline eksperimen — tidak mengakses data perangkat Anda secara langsung.",
     "p3": "Semua data yang dikumpulkan bersifat pseudonim. Tidak ada informasi pengenal pribadi yang disimpan.",
     "agree": "Saya telah membaca dan memahami informasi studi di atas. Saya setuju untuk berpartisipasi dalam sesi ini.",
     "continueBtn": "Saya Setuju — Lanjutkan"
@@ -58,6 +58,8 @@
     "galaxyWatchDesc": "Sensor PPG di pergelangan tangan — aplikasi pemantauan detak jantung berjalan",
     "polarH10": "Polar H10",
     "polarH10Desc": "Tali dada ECG terpasang dan terhubung",
+    "colmiRing": "Colmi Ring",
+    "colmiRingDesc": "Smart ring PPG di jari Anda — perekaman aktif",
     "connected": "Terhubung",
     "waiting": "Menunggu…",
     "continueBtn": "Perangkat Saya Siap — Lanjutkan"
@@ -108,7 +110,7 @@
     "sessionId": "ID Sesi",
     "status": "Status",
     "elapsed": "Total Waktu",
-    "removeDevices": "Anda sekarang dapat melepas perangkat Anda. Silakan beri tahu peneliti bahwa sesi Anda telah selesai.",
+    "removeDevices": "Anda sekarang dapat melepas perangkat Anda (Galaxy Watch, Polar H10, dan Colmi Ring). Silakan beri tahu peneliti bahwa sesi Anda telah selesai.",
     "newSession": "Mulai Sesi Baru",
     "exportData": "Ekspor Data"
   },
