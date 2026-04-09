@@ -21,14 +21,14 @@
   "home": {
     "title": "Experiment Controller",
     "subtitle": "Stress Detection Study",
-    "description": "Interactive experiment orchestrator for early stress detection research using Samsung Galaxy Watch (PPG) + Polar H10 (ECG).",
+    "description": "Interactive experiment orchestrator for early stress detection research using Samsung Galaxy Watch (PPG) + Polar H10 (ECG) + Colmi Ring (PPG smart ring).",
     "startButton": "Start New Session",
     "exportButton": "Export Data"
   },
   "consent": {
     "title": "Welcome to the Study",
     "p1": "Thank you for participating in this early stress detection research study. During this session, you will complete a 5-minute relaxation phase followed by a 5-minute mental arithmetic task.",
-    "p2": "Your physiological signals will be recorded by the wearable devices you are wearing (Samsung Galaxy Watch and Polar H10). This web application manages the experiment timeline only — it does not access your device data directly.",
+    "p2": "Your physiological signals will be recorded by the wearable devices you are wearing (Samsung Galaxy Watch, Polar H10, and Colmi Ring smart ring). This web application manages the experiment timeline only — it does not access your device data directly.",
     "p3": "All data collected is pseudonymous. No personally identifiable information is stored.",
     "agree": "I have read and understood the study information above. I agree to participate in this session.",
     "continueBtn": "I Agree — Continue"
@@ -58,6 +58,8 @@
     "galaxyWatchDesc": "PPG sensor on your wrist — HR monitoring app is running",
     "polarH10": "Polar H10",
     "polarH10Desc": "ECG chest strap is secured and connected",
+    "colmiRing": "Colmi Ring",
+    "colmiRingDesc": "PPG smart ring on your finger — recording is active",
     "connected": "Connected",
     "waiting": "Waiting…",
     "continueBtn": "My Devices Are Ready — Continue"
@@ -108,7 +110,7 @@
     "sessionId": "Session ID",
     "status": "Status",
     "elapsed": "Total Elapsed",
-    "removeDevices": "You may now remove your devices. Please inform the researcher that your session is complete.",
+    "removeDevices": "You may now remove your devices (Galaxy Watch, Polar H10, and Colmi Ring). Please inform the researcher that your session is complete.",
     "newSession": "Start New Session",
     "exportData": "Export Data"
   },
