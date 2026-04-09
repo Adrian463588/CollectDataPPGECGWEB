@@ -1,6 +1,9 @@
 // ============================================================
 // Relaxation Phase — 5-minute box breathing protocol (i18n)
 // Pattern: Inhale → Hold → Exhale → Hold (configurable durations)
+// FIX: Global 5-min timer starts exactly when breathing starts.
+//      The pre-phase countdown does NOT eat into the 5 minutes.
+//      Fixed stale-closure bug: signalEnd called via stable ref.
 // ============================================================
 
 "use client";
@@ -17,13 +20,12 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { useBoxBreathing } from "@/hooks/useBoxBreathing";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useEventLogger } from "@/hooks/useEventLogger";
-
 import { playTransitionBeep, stopAllAudio } from "@/lib/audio";
 import { DEFAULT_SESSION_CONFIG } from "@/lib/types";
 import { useT } from "@/i18n/provider";
 
-const RELAXATION_DURATION_MS = DEFAULT_SESSION_CONFIG.relaxation_duration_ms;
-const COUNTDOWN_DURATION_MS = 5_000;
+const RELAXATION_DURATION_MS = DEFAULT_SESSION_CONFIG.relaxation_duration_ms; // 300_000ms = exactly 5 min
+const COUNTDOWN_DURATION_MS = 5_000; // Pre-phase "get ready" — does NOT count against the 5 min
 
 export default function RelaxationPage() {
   const router = useRouter();
@@ -35,10 +37,14 @@ export default function RelaxationPage() {
   const hasStartedRef = useRef(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
 
+  // Stable ref to signalEnd — avoids stale closure bug where the global
+  // timer callback captures an old version of breathing.signalEnd.
+  const signalEndRef = useRef<() => void>(() => {});
+
   const { logEvent } = useEventLogger(sessionId);
   useHeartbeat(sessionId);
 
-  // Called when box breathing completes (current step finishes after global timer)
+  // Called when box breathing completes (after signalEnd + current step finishes)
   const handleBreathingComplete = useCallback(() => {
     void logEvent("PHASE_TRANSITION", {
       from_phase: "RELAXATION",
@@ -57,11 +63,18 @@ export default function RelaxationPage() {
     handleBreathingComplete
   );
 
-  // Global timer — when it expires, signal box breathing to finish current step
-  const handleGlobalTimerExpired = useCallback(() => {
-    breathing.signalEnd();
-  }, [breathing]);
+  // Keep ref current every render (no stale closure)
+  signalEndRef.current = breathing.signalEnd;
 
+  // Global 5-minute timer — callback uses a ref so it never goes stale
+  // even across re-renders. Empty deps = stable callback identity.
+  const globalTimer = useCountdown(
+    useCallback(() => {
+      signalEndRef.current();
+    }, [])
+  );
+
+  // Pre-phase 5-second countdown
   const countdownTimer = useCountdown(() => {
     setPhase("relaxation");
     void logEvent("PHASE_TRANSITION", {
@@ -71,25 +84,24 @@ export default function RelaxationPage() {
     playTransitionBeep();
   });
 
-  const globalTimer = useCountdown(handleGlobalTimerExpired);
-
-  // Start box breathing when relaxation phase begins
+  // When phase flips → start breathing + global 5-min timer at the SAME instant
   useEffect(() => {
     if (phase === "relaxation" && !hasStartedRef.current) {
       hasStartedRef.current = true;
       breathing.start();
-      globalTimer.start(RELAXATION_DURATION_MS);
+      globalTimer.start(RELAXATION_DURATION_MS); // Exactly 300_000 ms from this point
     }
-  }, [phase, breathing, globalTimer]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
-  // Initial mount — start countdown
+  // Mount → kick off the pre-phase countdown only
   useEffect(() => {
     countdownTimer.start(COUNTDOWN_DURATION_MS);
     void logEvent("PHASE_TRANSITION", {
       from_phase: "DEVICE_CHECK",
       to_phase: "COUNTDOWN",
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---- Skip handlers ----
@@ -106,7 +118,6 @@ export default function RelaxationPage() {
   const handleSkipConfirm = useCallback(() => {
     setSkipModalOpen(false);
     void logEvent("SKIP_CONFIRMED", { phase: "RELAXATION" });
-    // Stop all timers, breathing, and audio
     globalTimer.reset();
     stopAllAudio();
     void logEvent("PHASE_TRANSITION", {
@@ -149,12 +160,10 @@ export default function RelaxationPage() {
             transition={{ duration: 1 }}
             className="flex flex-col items-center gap-6"
           >
-            {/* Step label above circle */}
             <h2 className="text-xl font-semibold text-teal-300">
               {t("relaxation.boxBreathing")}
             </h2>
 
-            {/* Animated breathing circle */}
             <BoxBreathingCircle
               currentStep={breathing.currentStep}
               stepLabel={breathing.stepLabel}
@@ -162,7 +171,7 @@ export default function RelaxationPage() {
               stepTotalMs={breathing.stepTotalMs}
             />
 
-            {/* Global countdown */}
+            {/* Global countdown — starts at 5:00 exactly */}
             <CountdownTimer
               remainingMs={globalTimer.remainingMs}
               totalMs={RELAXATION_DURATION_MS}
@@ -170,7 +179,6 @@ export default function RelaxationPage() {
               size="md"
             />
 
-            {/* Cycle counter + Mute toggle */}
             <div className="flex items-center justify-between w-full max-w-sm">
               <p className="text-sm text-slate-400">
                 {t("relaxation.cycle")} {breathing.cycleNr} {t("relaxation.ofCycles")} ~{breathing.totalCycles}
@@ -211,7 +219,6 @@ export default function RelaxationPage() {
         )}
       </main>
 
-      {/* Skip confirmation modal */}
       <SkipConfirmModal
         open={skipModalOpen}
         onConfirm={handleSkipConfirm}
