@@ -14,7 +14,7 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import PhaseIndicator from "@/components/layout/PhaseIndicator";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useEventLogger } from "@/hooks/useEventLogger";
-import { useDevControls } from "@/hooks/useDevControls";
+
 import { playTransitionBeep } from "@/lib/audio";
 import { useT } from "@/i18n/provider";
 
@@ -35,7 +35,6 @@ export default function RoutinePage() {
 
   const { logEvent } = useEventLogger(sessionId);
   useHeartbeat(sessionId);
-  const devControls = useDevControls();
 
   // Log ROUTINE_STARTED once
   if (!hasLoggedStart.current) {
@@ -196,16 +195,15 @@ export default function RoutinePage() {
               {t("routine.continueBtn")}
             </button>
 
-            {/* Dev Controls: Skip button */}
-            {devControls && (
-              <button
-                onClick={handleSkipClick}
-                className="w-full mt-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-300 bg-amber-900/30 border border-amber-700/40 hover:bg-amber-800/40 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                id="skip-phase-btn"
-              >
-                {t("skip.button")}
-              </button>
-            )}
+            {/* Researcher Emergency Skip */}
+            <button
+              onClick={handleSkipClick}
+              className="w-full mt-2 px-4 py-2 rounded-lg text-xs font-medium text-rose-400/70 bg-rose-950/20 border border-rose-800/30 hover:bg-rose-900/30 hover:text-rose-300 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-700/40"
+              id="skip-phase-btn"
+              title="For researcher use only — skip this phase if there was a data collection error"
+            >
+              {t("skip.researcherBtn")}
+            </button>
           </Card>
         </motion.div>
       </main>

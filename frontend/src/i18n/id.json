@@ -116,6 +116,7 @@
   },
   "skip": {
     "button": "⏩ Lewati Fase (Dev)",
+    "researcherBtn": "⚠ Lewati Fase",
     "title": "Lewati Fase?",
     "message": "Apakah Anda yakin ingin melewati fase {phase}? Tindakan ini akan dicatat.",
     "confirm": "Ya, Lewati",

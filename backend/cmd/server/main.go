@@ -51,6 +51,12 @@ func main() {
 
 	slog.Info("database connected")
 
+	// Run migrations — idempotent, safe to call on every startup.
+	if err := store.RunMigrations(ctx, db); err != nil {
+		slog.Error("failed to run migrations", "error", err)
+		os.Exit(1)
+	}
+
 	// Create server
 	srv := server.New(cfg, db)
 
