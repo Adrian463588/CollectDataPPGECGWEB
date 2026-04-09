@@ -152,6 +152,12 @@
       "incorrect": "Salah",
       "totalQuestions": "Total Q"
     },
-    "noPhaseData": "Tidak ada data fase untuk partisipan ini."
+    "noPhaseData": "Tidak ada data fase untuk partisipan ini.",
+    "deleteParticipant": "Hapus",
+    "deleteTitle": "Hapus Data Partisipan",
+    "deleteWarning": "Ini akan menghapus SEMUA data untuk partisipan {code} secara permanen — sesi, event, respons, stimulus, dan catatan. Tindakan ini tidak dapat dibatalkan.",
+    "deleteConfirmLabel": "Ketik kode partisipan ({code}) untuk konfirmasi:",
+    "deleteConfirmBtn": "Ya, Hapus Permanen",
+    "deleteError": "Gagal menghapus partisipan. Silakan coba lagi."
   }
 }

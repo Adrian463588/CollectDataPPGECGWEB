@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -412,12 +413,13 @@ func (h *ExportHandler) PhaseTimelinePreview(w http.ResponseWriter, r *http.Requ
 // ---- Admin Handler ----
 
 type AdminHandler struct {
-	sessions store.SessionStore
-	adminKey string
+	sessions     store.SessionStore
+	participants store.ParticipantStore
+	adminKey     string
 }
 
-func NewAdminHandler(s store.SessionStore, adminKey string) *AdminHandler {
-	return &AdminHandler{sessions: s, adminKey: adminKey}
+func NewAdminHandler(s store.SessionStore, p store.ParticipantStore, adminKey string) *AdminHandler {
+	return &AdminHandler{sessions: s, participants: p, adminKey: adminKey}
 }
 
 func (h *AdminHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
@@ -432,6 +434,32 @@ func (h *AdminHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 		"total":    len(sessions),
 	})
 }
+
+func (h *AdminHandler) DeleteParticipant(w http.ResponseWriter, r *http.Request) {
+	code := chi.URLParam(r, "code")
+	if code == "" {
+		writeError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "participant code is required")
+		return
+	}
+
+	if err := h.participants.DeleteByCode(r.Context(), code); err != nil {
+		slog.Error("delete participant failed", "code", code, "error", err)
+		if strings.Contains(err.Error(), "participant not found") {
+			writeError(w, r, http.StatusNotFound, "NOT_FOUND", "Participant not found: "+code)
+			return
+		}
+		writeError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to delete participant")
+		return
+	}
+
+	slog.Info("participant deleted", "code", code)
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":  "deleted",
+		"message": "Participant " + code + " and all associated data have been deleted",
+	})
+}
+
+
 
 func (h *AdminHandler) PauseSession(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUUID(w, r, "id")
