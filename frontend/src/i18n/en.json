@@ -116,6 +116,7 @@
   },
   "skip": {
     "button": "⏩ Skip Phase (Dev)",
+    "researcherBtn": "⚠ Skip Phase",
     "title": "Skip Phase?",
     "message": "Are you sure you want to skip the {phase} phase? This action will be logged.",
     "confirm": "Yes, Skip",

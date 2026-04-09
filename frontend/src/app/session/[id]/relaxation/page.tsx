@@ -17,7 +17,7 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { useBoxBreathing } from "@/hooks/useBoxBreathing";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useEventLogger } from "@/hooks/useEventLogger";
-import { useDevControls } from "@/hooks/useDevControls";
+
 import { playTransitionBeep, stopAllAudio } from "@/lib/audio";
 import { DEFAULT_SESSION_CONFIG } from "@/lib/types";
 import { useT } from "@/i18n/provider";
@@ -34,7 +34,6 @@ export default function RelaxationPage() {
   const [phase, setPhase] = useState<"countdown" | "relaxation">("countdown");
   const hasStartedRef = useRef(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
-  const devControls = useDevControls();
 
   const { logEvent } = useEventLogger(sessionId);
   useHeartbeat(sessionId);
@@ -199,16 +198,15 @@ export default function RelaxationPage() {
               {t("relaxation.instruction")}
             </p>
 
-            {/* Dev Controls: Skip button */}
-            {devControls && (
-              <button
-                onClick={handleSkipClick}
-                className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-300 bg-amber-900/30 border border-amber-700/40 hover:bg-amber-800/40 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                id="skip-phase-btn"
-              >
-                {t("skip.button")}
-              </button>
-            )}
+            {/* Researcher Emergency Skip */}
+            <button
+              onClick={handleSkipClick}
+              className="mt-4 px-4 py-2 rounded-lg text-xs font-medium text-rose-400/70 bg-rose-950/20 border border-rose-800/30 hover:bg-rose-900/30 hover:text-rose-300 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-700/40"
+              id="skip-phase-btn"
+              title="For researcher use only — skip this phase if there was a data collection error"
+            >
+              {t("skip.researcherBtn")}
+            </button>
           </motion.div>
         )}
       </main>
