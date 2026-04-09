@@ -38,6 +38,8 @@ pgdata/
 # Logs
 *.log
 npm-debug.log*
+cypress_output.txt
+test_error.log
 
 # TypeScript
 *.tsbuildinfo
