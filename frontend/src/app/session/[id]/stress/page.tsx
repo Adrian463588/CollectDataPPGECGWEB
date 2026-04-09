@@ -62,12 +62,16 @@ export default function StressPage() {
   const [disabled, setDisabled] = useState(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
 
+  // Stable ref for nextProblem — avoids stale closure in question timeout handler
+  const nextProblemRef = useRef<() => void>(() => {});
+
   const problemStartRef = useRef<number>(Date.now());
   const { logEvent } = useEventLogger(sessionId);
   useHeartbeat(sessionId);
 
-  // ---- Phase timer ----
-  const handlePhaseComplete = useCallback(() => {
+  // Phase timer — stable callback via ref so it's never stale
+  const phaseCompleteRef = useRef<() => void>(() => {});
+  phaseCompleteRef.current = useCallback(() => {
     void logEvent("SESSION_COMPLETE", {
       total_duration_ms: STRESS_DURATION_MS,
       problems_total: score.total,
@@ -78,27 +82,25 @@ export default function StressPage() {
       to_phase: "COMPLETE",
     });
     playTransitionBeep();
-    // Kill all audio AFTER the final beep is scheduled.
-    // The safe timeout in playTransitionBeep will be cancelled by stopAllAudio
-    // within 150ms, but the first tone already started.
-    // We use a brief delay so the first tone plays, then kill everything.
     setTimeout(() => stopAllAudio(), 200);
     router.push(`/session/${sessionId}/complete`);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, sessionId, logEvent]);
+  }, [router, sessionId, logEvent, score]);
 
-  const phaseTimer = useCountdown(handlePhaseComplete);
+  const phaseTimer = useCountdown(
+    useCallback(() => {
+      phaseCompleteRef.current();
+    }, []) // stable identity — ref always fresh
+  );
 
-  // ---- Question timer ----
+
+  // Question timer — stable ref to avoid stale nextProblem closure
   const handleQuestionTimeout = useCallback(() => {
     setFeedback("timeout");
     setDisabled(true);
     void logEvent("RESPONSE_TIMEOUT", { stimulus_id: problem.id });
-
     setScore((prev) => ({ ...prev, total: prev.total + 1 }));
-
     setTimeout(() => {
-      nextProblem();
+      nextProblemRef.current();
     }, 1000);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [problem.id, logEvent]);
@@ -124,6 +126,11 @@ export default function StressPage() {
     questionTimer.start(QUESTION_TIMEOUT_MS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logEvent]);
+
+  // Keep ref current so handleQuestionTimeout always calls latest nextProblem
+  nextProblemRef.current = nextProblem;
+
+
 
   // ---- Submit answer ----
   const handleSubmit = useCallback(() => {

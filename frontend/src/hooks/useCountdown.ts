@@ -1,6 +1,8 @@
 // ============================================================
-// useCountdown — Precise countdown timer hook
-// Uses requestAnimationFrame for smooth rendering
+// useCountdown — Precise countdown timer using performance.now()
+// Uses requestAnimationFrame for smooth UI updates.
+// FIX: Added a hasFiredRef guard to prevent onComplete from firing
+//      more than once per start() call (prevents double-transition bug).
 // ============================================================
 
 "use client";
@@ -26,8 +28,10 @@ export function useCountdown(onComplete?: () => void): UseCountdownReturn {
   const durationRef = useRef<number>(0);
   const pausedRemainingRef = useRef<number>(0);
   const rafRef = useRef<number>(0);
+  const hasFiredRef = useRef<boolean>(false); // guard: fire onComplete exactly once
   const onCompleteRef = useRef(onComplete);
 
+  // Always keep the callback ref up-to-date — never goes stale
   onCompleteRef.current = onComplete;
 
   const tick = useCallback(() => {
@@ -38,7 +42,11 @@ export function useCountdown(onComplete?: () => void): UseCountdownReturn {
     if (remaining <= 0) {
       setIsRunning(false);
       setIsComplete(true);
-      onCompleteRef.current?.();
+      // Guard: only fire once per start() call
+      if (!hasFiredRef.current) {
+        hasFiredRef.current = true;
+        onCompleteRef.current?.();
+      }
       return;
     }
 
@@ -46,6 +54,8 @@ export function useCountdown(onComplete?: () => void): UseCountdownReturn {
   }, []);
 
   const start = useCallback((durationMs: number) => {
+    cancelAnimationFrame(rafRef.current);
+    hasFiredRef.current = false; // reset guard for this new countdown
     durationRef.current = durationMs;
     startTimeRef.current = performance.now();
     setRemainingMs(durationMs);
@@ -71,13 +81,17 @@ export function useCountdown(onComplete?: () => void): UseCountdownReturn {
 
   const reset = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
+    hasFiredRef.current = true; // prevent any pending completion from firing
     setRemainingMs(0);
     setIsRunning(false);
     setIsComplete(false);
   }, []);
 
   useEffect(() => {
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      hasFiredRef.current = true; // prevent stale completion after unmount
+    };
   }, []);
 
   return { remainingMs, isRunning, isComplete, start, pause, resume, reset };
