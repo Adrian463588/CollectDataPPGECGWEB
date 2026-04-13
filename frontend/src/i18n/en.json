@@ -12,6 +12,12 @@
     "authenticate": "Authenticate",
     "question": "Question"
   },
+  "colors": {
+    "red": "Red",
+    "green": "Green",
+    "blue": "Blue",
+    "yellow": "Yellow"
+  },
   "header": {
     "title": "Experiment Controller",
     "export": "Export"

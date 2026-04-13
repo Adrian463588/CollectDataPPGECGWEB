@@ -277,19 +277,27 @@ export default function StressPage() {
     [disabled, stroop, questionTimer, logEvent, nextTask]
   );
 
-  // ---- Keyboard — only active during arithmetic ----
+  // ---- Keyboard ----
   useEffect(() => {
-    if (taskType !== "arithmetic") return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (disabled) return;
-      if (e.key >= "0" && e.key <= "9") handleArithmeticInput(inputValue + e.key);
-      else if (e.key === "Backspace")    setInputValue((v) => v.slice(0, -1));
-      else if (e.key === "Enter" && inputValue) submitArithmetic(inputValue);
-      else if (e.key === "Escape")       setInputValue("");
+      
+      if (taskType === "arithmetic") {
+        if (e.key >= "0" && e.key <= "9") handleArithmeticInput(inputValue + e.key);
+        else if (e.key === "Backspace")    setInputValue((v) => v.slice(0, -1));
+        else if (e.key === "Enter" && inputValue) submitArithmetic(inputValue);
+        else if (e.key === "Escape")       setInputValue("");
+      } else if (taskType === "stroop") {
+        const key = e.key.toLowerCase();
+        if (key === "r" || key === "m") submitStroop("red");
+        else if (key === "g" || key === "h") submitStroop("green");
+        else if (key === "b") submitStroop("blue");
+        else if (key === "y" || key === "k") submitStroop("yellow");
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [taskType, disabled, inputValue, submitArithmetic, handleArithmeticInput]);
+  }, [taskType, disabled, inputValue, submitArithmetic, handleArithmeticInput, submitStroop]);
 
   // ---- Initialize on mount ----
   useEffect(() => {
