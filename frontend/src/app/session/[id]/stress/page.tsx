@@ -43,6 +43,7 @@ import { useT } from "@/i18n/provider";
 
 const STRESS_DURATION_MS   = DEFAULT_SESSION_CONFIG.stress_duration_ms;
 const QUESTION_TIMEOUT_MS  = DEFAULT_SESSION_CONFIG.question_timeout_ms;
+const SCWT_TIMEOUT_MS      = 3000;
 
 type TaskType = "arithmetic" | "stroop";
 type Feedback = "correct" | "incorrect" | "timeout" | null;
@@ -189,7 +190,7 @@ export default function StressPage() {
     setQuestionNumber((n) => n + 1);
     problemStartRef.current = Date.now();
     playStimulusBeep();
-    questionTimer.start(QUESTION_TIMEOUT_MS);
+    questionTimer.start(nextType === "arithmetic" ? QUESTION_TIMEOUT_MS : SCWT_TIMEOUT_MS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logEvent]);
 
@@ -430,7 +431,7 @@ export default function StressPage() {
               <span>⏱</span>
               <CountdownTimer
                 remainingMs={questionTimer.remainingMs}
-                totalMs={QUESTION_TIMEOUT_MS}
+                totalMs={SCWT_TIMEOUT_MS}
                 size="sm"
               />
             </div>
