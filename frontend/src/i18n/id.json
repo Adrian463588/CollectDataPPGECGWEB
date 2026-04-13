@@ -9,7 +9,8 @@
     "loading": "Memuat…",
     "error": "Kesalahan",
     "retry": "Coba Lagi",
-    "authenticate": "Autentikasi"
+    "authenticate": "Autentikasi",
+    "question": "Soal"
   },
   "header": {
     "title": "Pengontrol Eksperimen",
