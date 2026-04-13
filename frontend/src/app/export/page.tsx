@@ -31,6 +31,9 @@ interface ParticipantScore {
   correct: number;
   incorrect: number;
   total_questions: number;
+  scwt_correct: number;
+  scwt_incorrect: number;
+  scwt_total: number;
 }
 
 interface PreviewData {
@@ -364,6 +367,15 @@ function ExportContent() {
                           <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
                             {t("export.columns.totalQuestions")}
                           </th>
+                          <th className="px-3 py-2.5 text-right text-xs font-semibold text-violet-400 uppercase tracking-wider">
+                            {t("export.columns.scwtCorrect")}
+                          </th>
+                          <th className="px-3 py-2.5 text-right text-xs font-semibold text-orange-400 uppercase tracking-wider">
+                            {t("export.columns.scwtIncorrect")}
+                          </th>
+                          <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            {t("export.columns.scwtTotal")}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -411,6 +423,15 @@ function ExportContent() {
                                     <td className="px-3 py-2.5 text-right text-slate-300 font-mono text-xs font-bold" rowSpan={currentRows.length}>
                                       {score?.total_questions ?? 0}
                                     </td>
+                                    <td className="px-3 py-2.5 text-right text-violet-300 font-mono text-xs font-bold" rowSpan={currentRows.length}>
+                                      {score?.scwt_correct ?? 0}
+                                    </td>
+                                    <td className="px-3 py-2.5 text-right text-orange-300 font-mono text-xs font-bold" rowSpan={currentRows.length}>
+                                      {score?.scwt_incorrect ?? 0}
+                                    </td>
+                                    <td className="px-3 py-2.5 text-right text-slate-300 font-mono text-xs font-bold" rowSpan={currentRows.length}>
+                                      {score?.scwt_total ?? 0}
+                                    </td>
                                   </>
                                 );
                               })()}
@@ -418,7 +439,7 @@ function ExportContent() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={8} className="px-3 py-6 text-center text-slate-500 text-sm">
+                            <td colSpan={11} className="px-3 py-6 text-center text-slate-500 text-sm">
                               {t("export.noPhaseData")}
                             </td>
                           </tr>
