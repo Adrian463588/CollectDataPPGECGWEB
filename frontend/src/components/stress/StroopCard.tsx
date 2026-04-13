@@ -69,7 +69,7 @@ export default function StroopCard({
         className="bg-slate-800/80 rounded-2xl px-12 py-8 border border-slate-700/50 w-full text-center"
       >
         <span className={`text-5xl font-bold uppercase tracking-widest ${inkStyle.text}`}>
-          {problem.word.toUpperCase()}
+          {t(`colors.${problem.word}`)?.toUpperCase() || problem.word.toUpperCase()}
         </span>
       </motion.div>
 
@@ -112,7 +112,7 @@ export default function StroopCard({
               whileTap={{ scale: disabled ? 1 : 0.96 }}
               onClick={() => !disabled && onAnswer(color)}
               disabled={disabled}
-              aria-label={`Choose ${style.label}`}
+              aria-label={`Choose ${t(`colors.${color}`) || style.label}`}
               className={`
                 h-14 rounded-xl font-bold text-base transition-colors
                 ${style.bg} ${style.text} ${style.border} border
@@ -120,7 +120,7 @@ export default function StroopCard({
                 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-900 ${style.border}
               `}
             >
-              {style.label}
+              {t(`colors.${color}`) || style.label}
             </motion.button>
           );
         })}

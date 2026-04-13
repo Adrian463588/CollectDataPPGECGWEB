@@ -362,10 +362,11 @@ func (e *CSVExporter) getParticipantScores(ctx context.Context) (map[string]Part
 		SELECT
 			p.code,
 			COUNT(*) AS total,
-			COUNT(CASE WHEN r.is_correct THEN 1 END) AS correct
-		FROM responses r
-		JOIN sessions s ON s.id = r.session_id
+			COUNT(CASE WHEN (ev.payload->>'is_correct')::boolean THEN 1 END) AS correct
+		FROM events ev
+		JOIN sessions s ON s.id = ev.session_id
 		JOIN participants p ON p.id = s.participant_id
+		WHERE ev.event_type = 'RESPONSE_SUBMITTED'
 		GROUP BY p.code
 		ORDER BY p.code
 	`

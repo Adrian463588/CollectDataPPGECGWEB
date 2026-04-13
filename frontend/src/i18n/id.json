@@ -12,6 +12,12 @@
     "authenticate": "Autentikasi",
     "question": "Soal"
   },
+  "colors": {
+    "red": "Merah",
+    "green": "Hijau",
+    "blue": "Biru",
+    "yellow": "Kuning"
+  },
   "header": {
     "title": "Pengontrol Eksperimen",
     "export": "Ekspor"
