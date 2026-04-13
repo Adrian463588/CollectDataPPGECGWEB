@@ -140,8 +140,21 @@ export default function StressPage() {
     useCallback(() => {
       setFeedback("timeout");
       setDisabled(true);
+
+      const isArithmetic = taskTypeRef.current === "arithmetic";
+      setScore((prev) => ({
+        ...prev,
+        arithmeticTotal: prev.arithmeticTotal + (isArithmetic ? 1 : 0),
+        scwtTotal: prev.scwtTotal + (!isArithmetic ? 1 : 0),
+      }));
+
+      // No RESPONSE_TIMEOUT emitted to the DB, but useful for logs
+      void logEvent("RESPONSE_TIMEOUT" as any, {
+        task_type: taskTypeRef.current,
+      });
+
       setTimeout(() => nextTaskRef.current(), 1000);
-    }, [])
+    }, [logEvent])
   );
 
   // ---- Advance to next task (alternating) ----
