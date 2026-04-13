@@ -250,9 +250,14 @@ const wibDateFormat = "02/01/2006"
 
 // ParticipantScore holds aggregated quiz scores per participant.
 type ParticipantScore struct {
+	// Arithmetic (TSST) scores
 	Correct        int `json:"correct"`
 	Incorrect      int `json:"incorrect"`
 	TotalQuestions int `json:"total_questions"`
+	// Stroop Color Word Test scores
+	SCWTCorrect   int `json:"scwt_correct"`
+	SCWTIncorrect int `json:"scwt_incorrect"`
+	SCWTTotal     int `json:"scwt_total"`
 }
 
 // PhaseTimelineRow is a single row in the phase timeline export.
@@ -348,36 +353,35 @@ func (e *CSVExporter) getPhaseTimelineRows(ctx context.Context) ([]PhaseTimeline
 	return result, rows.Err()
 }
 
-// getParticipantScores queries RESPONSE_SUBMITTED events joined with stimuli
-// to compute correct, incorrect, and total question counts per participant.
+// getParticipantScores computes per-participant scores.
+// Arithmetic score is read from the `responses` table (authoritative is_correct boolean).
+// SCWT score is read from SCWT_RESPONSE events (client-side only, no DB responses row).
 func (e *CSVExporter) getParticipantScores(ctx context.Context) (map[string]ParticipantScore, error) {
-	query := `
+	// --- Arithmetic score from responses table ---
+	arithmeticQuery := `
 		SELECT
-			p.code AS participant_code,
-			COUNT(*) AS total_questions,
-			COUNT(CASE WHEN (ev.payload->>'participant_answer')::int = st.correct_answer THEN 1 END) AS correct
-		FROM events ev
-		JOIN sessions s ON s.id = ev.session_id
+			p.code,
+			COUNT(*) AS total,
+			COUNT(CASE WHEN r.is_correct THEN 1 END) AS correct
+		FROM responses r
+		JOIN sessions s ON s.id = r.session_id
 		JOIN participants p ON p.id = s.participant_id
-		LEFT JOIN stimuli st ON st.id = (ev.payload->>'stimulus_id')::uuid
-			AND st.session_id = ev.session_id
-		WHERE ev.event_type = 'RESPONSE_SUBMITTED'
 		GROUP BY p.code
 		ORDER BY p.code
 	`
 
-	rows, err := e.sessions.DB().Query(ctx, query)
+	aRows, err := e.sessions.DB().Query(ctx, arithmeticQuery)
 	if err != nil {
-		return nil, fmt.Errorf("query participant scores: %w", err)
+		return nil, fmt.Errorf("query arithmetic scores: %w", err)
 	}
-	defer rows.Close()
+	defer aRows.Close()
 
 	scores := make(map[string]ParticipantScore)
-	for rows.Next() {
+	for aRows.Next() {
 		var code string
 		var total, correct int
-		if err := rows.Scan(&code, &total, &correct); err != nil {
-			return nil, fmt.Errorf("scan participant score row: %w", err)
+		if err := aRows.Scan(&code, &total, &correct); err != nil {
+			return nil, fmt.Errorf("scan arithmetic score row: %w", err)
 		}
 		scores[code] = ParticipantScore{
 			Correct:        correct,
@@ -385,9 +389,48 @@ func (e *CSVExporter) getParticipantScores(ctx context.Context) (map[string]Part
 			TotalQuestions: total,
 		}
 	}
+	if err := aRows.Err(); err != nil {
+		return nil, err
+	}
 
-	return scores, rows.Err()
+	// --- SCWT score from events table ---
+	scwtQuery := `
+		SELECT
+			p.code,
+			COUNT(*) AS total,
+			COUNT(CASE WHEN (ev.payload->>'is_correct')::boolean THEN 1 END) AS correct
+		FROM events ev
+		JOIN sessions s ON s.id = ev.session_id
+		JOIN participants p ON p.id = s.participant_id
+		WHERE ev.event_type = 'SCWT_RESPONSE'
+		GROUP BY p.code
+	`
+
+	sRows, err := e.sessions.DB().Query(ctx, scwtQuery)
+	if err != nil {
+		// SCWT data may not exist yet — degrade gracefully
+		slog.Warn("failed to load SCWT scores (may not exist yet)", "error", err)
+		return scores, nil
+	}
+	defer sRows.Close()
+
+	for sRows.Next() {
+		var code string
+		var total, correct int
+		if err := sRows.Scan(&code, &total, &correct); err != nil {
+			slog.Warn("scan SCWT score row failed", "error", err)
+			continue
+		}
+		existing := scores[code]
+		existing.SCWTCorrect = correct
+		existing.SCWTIncorrect = total - correct
+		existing.SCWTTotal = total
+		scores[code] = existing
+	}
+
+	return scores, sRows.Err()
 }
+
 
 // ExportPhaseTimeline writes the 8-column CSV (phase timeline + scores).
 func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) error {
@@ -408,7 +451,8 @@ func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) erro
 
 	writer.Write([]string{
 		"participant_code", "phase", "start_timestamp", "end_timestamp", "date",
-		"correct", "incorrect", "total_questions",
+		"arithmetic_correct", "arithmetic_incorrect", "arithmetic_total",
+		"scwt_correct", "scwt_incorrect", "scwt_total",
 	})
 
 	for _, row := range rows {
@@ -422,6 +466,9 @@ func (e *CSVExporter) ExportPhaseTimeline(ctx context.Context, w io.Writer) erro
 			strconv.Itoa(score.Correct),
 			strconv.Itoa(score.Incorrect),
 			strconv.Itoa(score.TotalQuestions),
+			strconv.Itoa(score.SCWTCorrect),
+			strconv.Itoa(score.SCWTIncorrect),
+			strconv.Itoa(score.SCWTTotal),
 		})
 	}
 

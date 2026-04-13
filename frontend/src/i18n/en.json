@@ -94,14 +94,18 @@
     "continueBtn": "Continue to Task Phase →"
   },
   "stress": {
-    "title": "Mental Arithmetic",
+    "title": "Mental Arithmetic Task",
     "subtitle": "Solve the problems as quickly and accurately as possible.",
     "score": "Score",
     "correct": "Correct",
     "wrong": "Wrong",
     "timeUp": "Time's up!",
     "submit": "Submit",
-    "clear": "Clear"
+    "clear": "Clear",
+    "taskArithmetic": "Arithmetic",
+    "taskStroop": "Stroop Color Test",
+    "stroopInstruction": "Stroop Color Word Test",
+    "pickInkColor": "Choose the COLOR of the text (not the word)"
   },
   "complete": {
     "title": "Session Complete!",
@@ -140,7 +144,7 @@
     "downloaded": "✓ Downloaded — Download Again?",
     "downloadError": "✗ Error — Retry",
     "lastExport": "Last export",
-    "csvNote": "CSV: participant_code, phase, start/end timestamps (ISO 8601 WIB), date, correct, incorrect, total_questions.",
+    "csvNote": "CSV: participant_code, phase, start/end timestamps (ISO 8601 WIB), date, arithmetic scores (correct/incorrect/total), SCWT scores (correct/incorrect/total).",
     "dataNote": "All data is pseudonymous — no PII is exported.",
     "columns": {
       "code": "Code",
@@ -148,9 +152,12 @@
       "startTime": "Start Time",
       "endTime": "End Time",
       "date": "Date",
-      "correct": "Correct",
-      "incorrect": "Incorrect",
-      "totalQuestions": "Total Q"
+      "correct": "Arith. Correct",
+      "incorrect": "Arith. Wrong",
+      "totalQuestions": "Arith. Total",
+      "scwtCorrect": "SCWT Correct",
+      "scwtIncorrect": "SCWT Wrong",
+      "scwtTotal": "SCWT Total"
     },
     "noPhaseData": "No phase data for this participant.",
     "deleteParticipant": "Delete",

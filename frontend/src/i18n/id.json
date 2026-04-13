@@ -94,14 +94,18 @@
     "continueBtn": "Lanjut ke Fase Tugas →"
   },
   "stress": {
-    "title": "Aritmatika Mental",
+    "title": "Tugas Aritmatika Mental",
     "subtitle": "Selesaikan soal secepat dan seakurat mungkin.",
     "score": "Skor",
     "correct": "Benar",
     "wrong": "Salah",
     "timeUp": "Waktu habis!",
     "submit": "Kirim",
-    "clear": "Hapus"
+    "clear": "Hapus",
+    "taskArithmetic": "Aritmatika",
+    "taskStroop": "Tes Warna Stroop",
+    "stroopInstruction": "Tes Warna Kata Stroop",
+    "pickInkColor": "Pilih WARNA teks (bukan kata yang tertulis)"
   },
   "complete": {
     "title": "Sesi Selesai!",
@@ -140,7 +144,7 @@
     "downloaded": "✓ Terunduh — Unduh Lagi?",
     "downloadError": "✗ Kesalahan — Coba Lagi",
     "lastExport": "Ekspor terakhir",
-    "csvNote": "CSV: kode_partisipan, fase, start/end timestamps (ISO 8601 WIB), tanggal, benar, salah, total_pertanyaan.",
+    "csvNote": "CSV: kode_partisipan, fase, start/end timestamps (ISO 8601 WIB), tanggal, skor aritmatika (benar/salah/total), skor SCWT (benar/salah/total).",
     "dataNote": "Semua data bersifat pseudonim — tidak ada PII yang diekspor.",
     "columns": {
       "code": "Kode",
@@ -148,9 +152,12 @@
       "startTime": "Waktu Mulai",
       "endTime": "Waktu Selesai",
       "date": "Tanggal",
-      "correct": "Benar",
-      "incorrect": "Salah",
-      "totalQuestions": "Total Q"
+      "correct": "Aritmatika Benar",
+      "incorrect": "Aritmatika Salah",
+      "totalQuestions": "Total Aritmatika",
+      "scwtCorrect": "SCWT Benar",
+      "scwtIncorrect": "SCWT Salah",
+      "scwtTotal": "Total SCWT"
     },
     "noPhaseData": "Tidak ada data fase untuk partisipan ini.",
     "deleteParticipant": "Hapus",
