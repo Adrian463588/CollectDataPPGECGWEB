@@ -132,54 +132,70 @@ export default function StressPage() {
 
 
 
-  // ---- Submit answer ----
-  const handleSubmit = useCallback(() => {
-    if (disabled || !inputValue) return;
+  // ---- Submit answer — accepts the candidate value explicitly so any trigger can call it (DRY) ----
+  const submitAnswer = useCallback(
+    (value: string) => {
+      if (disabled || !value) return;
 
-    const reactionTimeMs = Date.now() - problemStartRef.current;
-    const participantAnswer = parseInt(inputValue, 10);
-    const isCorrect = participantAnswer === problem.answer;
+      const reactionTimeMs = Date.now() - problemStartRef.current;
+      const participantAnswer = parseInt(value, 10);
+      const isCorrect = participantAnswer === problem.answer;
 
-    questionTimer.reset();
-    setDisabled(true);
-    setFeedback(isCorrect ? "correct" : "incorrect");
-    setScore((prev) => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      total: prev.total + 1,
-    }));
+      questionTimer.reset();
+      setDisabled(true);
+      setFeedback(isCorrect ? "correct" : "incorrect");
+      setScore((prev) => ({
+        correct: prev.correct + (isCorrect ? 1 : 0),
+        total: prev.total + 1,
+      }));
 
-    void logEvent("RESPONSE_SUBMITTED", {
-      stimulus_id: problem.id,
-      participant_answer: participantAnswer,
-      is_correct: isCorrect,
-      reaction_time_ms: reactionTimeMs,
-    });
+      void logEvent("RESPONSE_SUBMITTED", {
+        stimulus_id: problem.id,
+        participant_answer: participantAnswer,
+        is_correct: isCorrect,
+        reaction_time_ms: reactionTimeMs,
+      });
 
-    if (isCorrect) playCorrectChime();
-    else playIncorrectBuzz();
+      if (isCorrect) playCorrectChime();
+      else playIncorrectBuzz();
 
-    setTimeout(() => {
-      nextProblem();
-    }, isCorrect ? 500 : 1000);
-  }, [disabled, inputValue, problem, questionTimer, logEvent, nextProblem]);
+      setTimeout(() => {
+        nextProblem();
+      }, isCorrect ? 500 : 1000);
+    },
+    [disabled, problem, questionTimer, logEvent, nextProblem]
+  );
+
+  // ---- Handle digit input — shared by keyboard and on-screen keypad ----
+  // Auto-submits immediately when the typed value exactly matches the correct answer.
+  const handleInputChange = useCallback(
+    (next: string) => {
+      setInputValue(next);
+      if (!next) return;
+      if (parseInt(next, 10) === problem.answer) {
+        submitAnswer(next);
+      }
+    },
+    [problem.answer, submitAnswer]
+  );
 
   // ---- Keyboard input ----
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (disabled) return;
       if (e.key >= "0" && e.key <= "9") {
-        setInputValue((v) => v + e.key);
+        handleInputChange(inputValue + e.key);
       } else if (e.key === "Backspace") {
         setInputValue((v) => v.slice(0, -1));
       } else if (e.key === "Enter" && inputValue) {
-        handleSubmit();
+        submitAnswer(inputValue);
       } else if (e.key === "Escape") {
         setInputValue("");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [disabled, inputValue, handleSubmit]);
+  }, [disabled, inputValue, submitAnswer, handleInputChange]);
 
   // ---- Initialize ----
   useEffect(() => {
@@ -272,8 +288,8 @@ export default function StressPage() {
         {/* Input */}
         <NumericKeypad
           value={inputValue}
-          onChange={setInputValue}
-          onSubmit={handleSubmit}
+          onChange={handleInputChange}
+          onSubmit={() => submitAnswer(inputValue)}
           onValidationError={(reason) => {
             void logEvent("VALIDATION_ERROR" as Parameters<typeof logEvent>[0], {
               reason,
