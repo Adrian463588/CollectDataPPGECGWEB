@@ -31,6 +31,7 @@ export default function RoutinePage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [savedNotes, setSavedNotes] = useState<{ id: string; charLength: number; time: string }[]>([]);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const hasLoggedStart = useRef(false);
 
   const { logEvent } = useEventLogger(sessionId);
@@ -81,8 +82,14 @@ export default function RoutinePage() {
     }
   }, [noteContent, sessionId, logEvent]);
 
-  // Continue to stress
+  // Continue to stress — opens data confirm modal first
   const handleContinue = useCallback(() => {
+    setConfirmModalOpen(true);
+  }, []);
+
+  // Called when the researcher confirms data is saved correctly
+  const handleConfirmContinue = useCallback(() => {
+    setConfirmModalOpen(false);
     void logEvent("ROUTINE_COMPLETED", { phase: "ROUTINE" });
     void logEvent("PHASE_TRANSITION", {
       from_phase: "ROUTINE",
@@ -91,6 +98,10 @@ export default function RoutinePage() {
     playTransitionBeep();
     router.push(`/session/${sessionId}/stress`);
   }, [logEvent, router, sessionId]);
+
+  const handleCancelContinue = useCallback(() => {
+    setConfirmModalOpen(false);
+  }, []);
 
   // Skip handlers
   const handleSkipClick = useCallback(() => {
@@ -213,6 +224,17 @@ export default function RoutinePage() {
         onConfirm={handleSkipConfirm}
         onCancel={handleSkipCancel}
         phaseName={t("phases.routine")}
+      />
+
+      {/* Data confirmation modal — shown when clicking Continue to Task Phase */}
+      <SkipConfirmModal
+        open={confirmModalOpen}
+        onConfirm={handleConfirmContinue}
+        onCancel={handleCancelContinue}
+        phaseName=""
+        title={t("routine.confirmTitle")}
+        message={t("routine.confirmMessage")}
+        confirmLabel={t("routine.confirmBtn")}
       />
     </div>
   );

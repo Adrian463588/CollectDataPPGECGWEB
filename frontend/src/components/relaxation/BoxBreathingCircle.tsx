@@ -2,6 +2,7 @@
 // BoxBreathingCircle — Animated circle for box breathing protocol
 // Expands on inhale, holds, contracts on exhale, holds.
 // Displays step label + countdown seconds.
+// Labels are resolved via i18n so they respect the active locale.
 // ============================================================
 
 "use client";
@@ -9,17 +10,26 @@
 import { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { BreathingStep } from "@/lib/types";
+import { useT } from "@/i18n/provider";
 
 interface BoxBreathingCircleProps {
   /** Current breathing step */
   currentStep: BreathingStep;
-  /** Human-readable label */
-  stepLabel: string;
+  /** @deprecated Label is now derived from i18n — this prop is unused */
+  stepLabel?: string;
   /** Remaining ms in current step */
   stepRemainingMs: number;
   /** Total ms for current step */
   stepTotalMs: number;
 }
+
+/** Maps each BreathingStep to its i18n key in the relaxation namespace */
+const STEP_LABEL_KEYS: Record<BreathingStep, string> = {
+  inhale: "relaxation.breatheIn",
+  hold_after_inhale: "relaxation.hold",
+  exhale: "relaxation.breatheOut",
+  hold_after_exhale: "relaxation.hold",
+};
 
 const STEP_COLORS: Record<BreathingStep, { from: string; to: string; border: string }> = {
   inhale: {
@@ -53,11 +63,13 @@ const STEP_SCALES: Record<BreathingStep, { from: number; to: number }> = {
 
 export default function BoxBreathingCircle({
   currentStep,
-  stepLabel,
   stepRemainingMs,
   stepTotalMs,
 }: BoxBreathingCircleProps) {
+  const t = useT();
   const prefersReducedMotion = useReducedMotion();
+
+  const translatedLabel = t(STEP_LABEL_KEYS[currentStep]);
 
   const secondsLeft = Math.ceil(stepRemainingMs / 1000);
   const progress = 1 - stepRemainingMs / stepTotalMs; // 0 → 1
@@ -116,7 +128,7 @@ export default function BoxBreathingCircle({
           transition={{ duration: 0.3 }}
           className="text-sm font-medium text-teal-100 uppercase tracking-wider"
         >
-          {stepLabel}
+          {translatedLabel}
         </motion.span>
 
         {/* Step countdown seconds */}

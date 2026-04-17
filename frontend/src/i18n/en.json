@@ -98,7 +98,10 @@
     "saveError": "✗ Error — Retry",
     "savedNotes": "Saved Notes",
     "noteInfo": "chars — saved at",
-    "continueBtn": "Continue to Task Phase →"
+    "continueBtn": "Continue to Task Phase →",
+    "confirmTitle": "Confirm Data",
+    "confirmMessage": "Has all data been saved correctly?",
+    "confirmBtn": "Yes, Continue"
   },
   "stress": {
     "title": "Mental Arithmetic Task",

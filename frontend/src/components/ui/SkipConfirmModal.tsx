@@ -15,6 +15,12 @@ interface SkipConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   phaseName: string;
+  /** Optional override for the modal title (defaults to skip.title) */
+  title?: string;
+  /** Optional override for the body message (defaults to skip.message) */
+  message?: string;
+  /** Optional label for the confirm button (defaults to skip.confirm) */
+  confirmLabel?: string;
 }
 
 export default function SkipConfirmModal({
@@ -22,8 +28,14 @@ export default function SkipConfirmModal({
   onConfirm,
   onCancel,
   phaseName,
+  title,
+  message,
+  confirmLabel,
 }: SkipConfirmModalProps) {
   const t = useT();
+  const resolvedTitle = title ?? t("skip.title");
+  const resolvedMessage = message ?? t("skip.message", { phase: phaseName });
+  const resolvedConfirmLabel = confirmLabel ?? t("skip.confirm");
   const confirmRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -104,10 +116,10 @@ export default function SkipConfirmModal({
           >
             <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
               <h3 className="text-lg font-bold text-white mb-2">
-                {t("skip.title")}
+                {resolvedTitle}
               </h3>
               <p id="skip-modal-message" className="text-sm text-slate-400 mb-6">
-                {t("skip.message", { phase: phaseName })}
+                {resolvedMessage}
               </p>
 
               <div className="flex gap-3">
@@ -124,7 +136,7 @@ export default function SkipConfirmModal({
                   className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-amber-600 hover:bg-amber-500 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400"
                   id="skip-confirm-btn"
                 >
-                  {t("skip.confirm")}
+                  {resolvedConfirmLabel}
                 </button>
               </div>
             </div>

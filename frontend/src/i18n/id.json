@@ -98,7 +98,10 @@
     "saveError": "✗ Kesalahan — Coba Lagi",
     "savedNotes": "Catatan Tersimpan",
     "noteInfo": "karakter — disimpan pukul",
-    "continueBtn": "Lanjut ke Fase Tugas →"
+    "continueBtn": "Lanjut ke Fase Tugas →",
+    "confirmTitle": "Konfirmasi Data",
+    "confirmMessage": "Apakah data sudah tersimpan dengan benar?",
+    "confirmBtn": "Ya, Lanjutkan"
   },
   "stress": {
     "title": "Tugas Aritmatika Mental",
