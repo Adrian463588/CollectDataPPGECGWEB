@@ -13,7 +13,7 @@ import { useRouter, useParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
 import MathProblem from "@/components/stress/MathProblem";
-import NumericKeypad from "@/components/stress/NumericKeypad";
+import NumericKeypad, { MAX_DIGITS } from "@/components/stress/NumericKeypad";
 import StroopCard, {
   type StroopProblem,
   type StroopColor,
@@ -302,7 +302,9 @@ export default function StressPage() {
       if (disabled) return;
       
       if (taskType === "arithmetic") {
-        if (e.key >= "0" && e.key <= "9") handleArithmeticInput(inputValue + e.key);
+        // Guard: physical keyboard must obey the same digit limit as on-screen buttons.
+        if (e.key >= "0" && e.key <= "9" && inputValue.length < MAX_DIGITS)
+          handleArithmeticInput(inputValue + e.key);
         else if (e.key === "Backspace")    setInputValue((v) => v.slice(0, -1));
         else if (e.key === "Enter" && inputValue) submitArithmetic(inputValue);
         else if (e.key === "Escape")       setInputValue("");

@@ -40,6 +40,11 @@ func (m *MockParticipantStore) GetByID(ctx context.Context, id uuid.UUID) (*mode
 	return nil, args.Error(1)
 }
 
+func (m *MockParticipantStore) DeleteByCode(ctx context.Context, code string) error {
+	args := m.Called(ctx, code)
+	return args.Error(0)
+}
+
 // ---- SessionStore Mock ----
 
 type MockSessionStore struct {

@@ -23,12 +23,15 @@ export interface StroopProblem {
   correctAnswer: StroopColor;
 }
 
-// Tailwind color classes keyed by StroopColor
-export const STROOP_COLORS: Record<StroopColor, { text: string; bg: string; border: string; label: string }> = {
-  red:    { text: "text-red-400",    bg: "bg-red-500/20",    border: "border-red-500/40",    label: "Red" },
-  green:  { text: "text-green-400",  bg: "bg-green-500/20",  border: "border-green-500/40",  label: "Green" },
-  blue:   { text: "text-blue-400",   bg: "bg-blue-500/20",   border: "border-blue-500/40",   label: "Blue" },
-  yellow: { text: "text-yellow-400", bg: "bg-yellow-500/20", border: "border-yellow-500/40", label: "Yellow" },
+// Only `text` is kept for the stimulus word's ink color.
+// Button styles are intentionally neutral — participants must NOT be able to
+// match the answer button color to the stimulus ink color (that would bypass
+// the Stroop cognitive-interference task).
+export const STROOP_COLORS: Record<StroopColor, { text: string; label: string }> = {
+  red:    { text: "text-red-400",    label: "Red" },
+  green:  { text: "text-green-400",  label: "Green" },
+  blue:   { text: "text-blue-400",   label: "Blue" },
+  yellow: { text: "text-yellow-400", label: "Yellow" },
 };
 
 export const ALL_STROOP_COLORS: StroopColor[] = ["red", "green", "blue", "yellow"];
@@ -101,7 +104,10 @@ export default function StroopCard({
         )}
       </AnimatePresence>
 
-      {/* Color choice buttons — 2×2 grid */}
+      {/* Color choice buttons — 2×2 grid
+           All buttons use the SAME neutral monochrome style.
+           Coloured styling is deliberately absent here: the ink colour
+           must only appear on the stimulus word above, not on the options. */}
       <div className="grid grid-cols-2 gap-3 w-full">
         {ALL_STROOP_COLORS.map((color) => {
           const style = STROOP_COLORS[color];
@@ -113,12 +119,13 @@ export default function StroopCard({
               onClick={() => !disabled && onAnswer(color)}
               disabled={disabled}
               aria-label={`Choose ${t(`colors.${color}`) || style.label}`}
-              className={`
+              className="
                 h-14 rounded-xl font-bold text-base transition-colors
-                ${style.bg} ${style.text} ${style.border} border
+                bg-slate-800 text-white border border-slate-600
+                hover:bg-slate-700 hover:border-slate-500
                 disabled:opacity-40 disabled:cursor-not-allowed
-                focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-900 ${style.border}
-              `}
+                focus:outline-none focus:ring-2 focus:ring-white/20
+              "
             >
               {t(`colors.${color}`) || style.label}
             </motion.button>
