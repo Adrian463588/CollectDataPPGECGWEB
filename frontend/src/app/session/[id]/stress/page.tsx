@@ -114,6 +114,11 @@ export default function StressPage() {
   const { logEvent }      = useEventLogger(sessionId);
   useHeartbeat(sessionId);
 
+  // Track the currently-displayed stimulus so the timeout callback can
+  // emit a RESPONSE_SUBMITTED event with the correct stimulus_id/type.
+  const currentStimulusIdRef   = useRef<string>(arithmetic.id);
+  const currentStimulusTypeRef = useRef<TaskType>("arithmetic");
+
   // ---- Phase timer (stable callback via ref) ----
   const scoreRef = useRef(score);
   scoreRef.current = score;
@@ -142,16 +147,24 @@ export default function StressPage() {
       setFeedback("timeout");
       setDisabled(true);
 
-      const isArithmetic = taskTypeRef.current === "arithmetic";
+      const isArithmetic = currentStimulusTypeRef.current === "arithmetic";
+
+      // Update live score display — timeout is treated as incorrect.
       setScore((prev) => ({
         ...prev,
         arithmeticTotal: prev.arithmeticTotal + (isArithmetic ? 1 : 0),
-        scwtTotal: prev.scwtTotal + (!isArithmetic ? 1 : 0),
+        scwtTotal:        prev.scwtTotal        + (!isArithmetic ? 1 : 0),
       }));
 
-      // No RESPONSE_TIMEOUT emitted to the DB, but useful for logs
-      void logEvent("RESPONSE_TIMEOUT" as any, {
-        task_type: taskTypeRef.current,
+      // Emit RESPONSE_SUBMITTED so the backend export counts this as incorrect.
+      // timed_out:true lets analysts distinguish timeouts from submitted wrong answers.
+      void logEvent("RESPONSE_SUBMITTED", {
+        stimulus_id:       currentStimulusIdRef.current,
+        stimulus_type:     currentStimulusTypeRef.current,
+        participant_answer: null,
+        is_correct:        false,
+        timed_out:         true,
+        reaction_time_ms:  isArithmetic ? QUESTION_TIMEOUT_MS : SCWT_TIMEOUT_MS,
       });
 
       setTimeout(() => nextTaskRef.current(), 1000);
@@ -165,6 +178,9 @@ export default function StressPage() {
     if (nextType === "arithmetic") {
       const next = generateArithmetic();
       setArithmetic(next);
+      // Keep refs current so the question-timeout callback has the right stimulus.
+      currentStimulusIdRef.current   = next.id;
+      currentStimulusTypeRef.current = "arithmetic";
       void logEvent("STIMULUS_SHOWN", {
         stimulus_id:    next.id,
         stimulus_type:  "arithmetic",
@@ -174,6 +190,8 @@ export default function StressPage() {
     } else {
       const next = generateStroop();
       setStroop(next);
+      currentStimulusIdRef.current   = next.id;
+      currentStimulusTypeRef.current = "stroop";
       void logEvent("STIMULUS_SHOWN", {
         stimulus_id:    next.id,
         stimulus_type:  "stroop",
@@ -260,8 +278,8 @@ export default function StressPage() {
         scwtTotal:   prev.scwtTotal   + 1,
       }));
 
-      // SCWT uses its own event type — not stored in responses table
-      void logEvent("SCWT_RESPONSE" as Parameters<typeof logEvent>[0], {
+      // SCWT uses its own event type — not stored in responses table.
+      void logEvent("SCWT_RESPONSE", {
         stimulus_id:       stroop.id,
         stimulus_type:     "stroop",
         word:              stroop.word,
@@ -406,7 +424,7 @@ export default function StressPage() {
               onChange={handleArithmeticInput}
               onSubmit={() => submitArithmetic(inputValue)}
               onValidationError={(reason) => {
-                void logEvent("VALIDATION_ERROR" as Parameters<typeof logEvent>[0], {
+                void logEvent("VALIDATION_ERROR", {
                   reason,
                   value_length: inputValue.length,
                   phase: "STRESS",

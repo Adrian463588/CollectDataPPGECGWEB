@@ -41,6 +41,7 @@ export type EventType =
   | "STIMULUS_SHOWN"
   | "RESPONSE_SUBMITTED"
   | "RESPONSE_TIMEOUT"
+  | "SCWT_RESPONSE"
   | "HEARTBEAT"
   | "RECONNECT"
   | "AUDIO_TOGGLE"
