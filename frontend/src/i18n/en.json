@@ -175,6 +175,8 @@
     "deleteWarning": "This will permanently delete ALL data for participant {code} — sessions, events, responses, stimuli, and notes. This action cannot be undone.",
     "deleteConfirmLabel": "Type the participant code ({code}) to confirm:",
     "deleteConfirmBtn": "Yes, Delete Permanently",
-    "deleteError": "Failed to delete participant. Please try again."
+    "deleteError": "Failed to delete participant. Please try again.",
+    "searchPlaceholder": "Search participant code…",
+    "searchNoResults": "No participants found."
   }
 }

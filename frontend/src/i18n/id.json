@@ -175,6 +175,8 @@
     "deleteWarning": "Ini akan menghapus SEMUA data untuk partisipan {code} secara permanen — sesi, event, respons, stimulus, dan catatan. Tindakan ini tidak dapat dibatalkan.",
     "deleteConfirmLabel": "Ketik kode partisipan ({code}) untuk konfirmasi:",
     "deleteConfirmBtn": "Ya, Hapus Permanen",
-    "deleteError": "Gagal menghapus partisipan. Silakan coba lagi."
+    "deleteError": "Gagal menghapus partisipan. Silakan coba lagi.",
+    "searchPlaceholder": "Cari kode partisipan…",
+    "searchNoResults": "Partisipan tidak ditemukan."
   }
 }

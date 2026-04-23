@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useCallback, useEffect, useRef, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Card from "@/components/ui/Card";
@@ -87,6 +87,17 @@ function ExportContent() {
   const currentRows = preview?.data[currentCode] ?? [];
   const isFirst = currentIndex <= 0;
   const isLast = currentIndex >= participants.length - 1;
+
+  // ---- Search state ----
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  /** Participant codes filtered by search query (case-insensitive substring match).
+   *  Declared after `participants` so the dependency is always defined. */
+  const filteredParticipants = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return q ? participants.filter((p) => p.toLowerCase().includes(q)) : participants;
+  }, [participants, searchQuery]);
 
   // Sync URL when participant list loads for first time
   useEffect(() => {
@@ -279,6 +290,72 @@ function ExportContent() {
               <p className="text-sm text-slate-400 mb-6">
                 {t("export.dashboardSubtitle")}
               </p>
+
+              {/* ---- Participant Search ---- */}
+              {preview && participants.length > 0 && (
+                <div className="relative mb-5">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm select-none">🔍</span>
+                    <input
+                      type="search"
+                      id="participant-search-input"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+                      onKeyDown={(e) => e.key === "Escape" && setSearchQuery("")}
+                      placeholder={t("export.searchPlaceholder")}
+                      autoComplete="off"
+                      className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5
+                                 text-sm text-white placeholder:text-slate-500
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500
+                                 transition-colors"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs transition-colors"
+                        aria-label="Clear search"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown results */}
+                  {searchFocused && searchQuery.trim() && (
+                    <ul
+                      role="listbox"
+                      className="absolute z-20 w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl
+                                 overflow-y-auto max-h-48 shadow-2xl"
+                    >
+                      {filteredParticipants.length > 0 ? (
+                        filteredParticipants.map((code) => (
+                          <li
+                            key={code}
+                            role="option"
+                            aria-selected={code === currentCode}
+                            onMouseDown={() => {
+                              router.replace(`/export?participant=${encodeURIComponent(code)}`);
+                              setSearchQuery("");
+                            }}
+                            className="px-4 py-2.5 text-sm font-mono cursor-pointer transition-colors
+                                       text-white hover:bg-indigo-600/30
+                                       aria-selected:bg-indigo-600/20 aria-selected:text-indigo-300
+                                       first:rounded-t-xl last:rounded-b-xl"
+                          >
+                            {code}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-4 py-2.5 text-sm text-slate-500">
+                          {t("export.searchNoResults")}
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              )}
 
               {/* Preview Section */}
               {previewLoading && (
